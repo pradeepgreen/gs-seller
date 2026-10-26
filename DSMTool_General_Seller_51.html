@@ -1,0 +1,2727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DSM General Seller Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js">
+  function copyCards() {
+    var company = document.getElementById('exec-company').innerText;
+    var week    = document.getElementById('exec-week').innerText;
+
+    /* Inline styles for email compatibility */
+    var cardStyle   = 'display:inline-block;width:160px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;text-align:center;vertical-align:top;margin:5px;box-shadow:0 1px 3px rgba(0,0,0,0.07);';
+    var titleStyle  = 'font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;margin-bottom:6px;';
+    var valueStyle  = 'font-size:20px;font-weight:700;color:#1e293b;';
+    var subStyle    = 'font-size:11px;color:#64748b;margin-top:4px;';
+    var negStyle    = 'font-size:20px;font-weight:700;color:#ef4444;';
+    var posStyle    = 'font-size:20px;font-weight:700;color:#10b981;';
+    var warnStyle   = 'font-size:20px;font-weight:700;color:#f59e0b;';
+
+    function val(id){ var el=document.getElementById(id); return el?el.innerText:''; }
+    function colorStyle(id){
+      var el=document.getElementById(id); if(!el) return valueStyle;
+      if(el.classList.contains('sign-neg'))  return negStyle;
+      if(el.classList.contains('sign-pos'))  return posStyle;
+      if(el.classList.contains('sign-warn')) return warnStyle;
+      var c=el.style.color||'';
+      if(c.indexOf('10b981')!==-1||c==='green') return posStyle;
+      if(c.indexOf('ef4444')!==-1||c==='red')   return negStyle;
+      return valueStyle;
+    }
+
+    var penTitleColor = (document.getElementById('k-pen')||{}).style&&document.getElementById('k-pen').style.color.indexOf('10b981')!==-1?'#10b981':'#ef4444';
+
+    var html =
+      '<div style="font-family:Segoe UI,Roboto,Arial,sans-serif;padding:12px;">' +
+      '<div style="background:linear-gradient(135deg,#4f46e5,#4338ca);color:white;padding:10px 16px;border-radius:8px 8px 0 0;margin-bottom:12px;">' +
+      '<span style="font-size:14px;font-weight:700;">&#128202; '+company+'</span>' +
+      '<span style="font-size:12px;opacity:0.85;margin-left:12px;">'+week+'</span>' +
+      '</div>' +
+      '<div style="background:#f8fafc;padding:10px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;">' +
+
+      /* Card 1 — UI DSM Payable */
+      '<div style="'+cardStyle+'">' +
+      '<div style="'+titleStyle+'">Under Injection DSM</div>' +
+      '<div style="'+colorStyle('k-u-pay')+'">'+val('k-u-pay')+'</div>' +
+      '<div style="'+subStyle+'">'+val('k-u-vol')+'</div></div>' +
+
+      /* Card 2 — OI DSM */
+      '<div style="'+cardStyle+'">' +
+      '<div style="'+titleStyle+'">'+val('k-oi-title')+'</div>' +
+      '<div style="'+colorStyle('k-o-rec')+'">'+val('k-o-rec')+'</div>' +
+      '<div style="'+subStyle+'">'+val('k-o-vol')+'</div></div>' +
+
+      /* Card 3 — Total Penalty/Saving */
+      '<div style="'+cardStyle+'">' +
+      '<div style="'+titleStyle+';color:'+penTitleColor+';">'+val('k-pen-title')+'</div>' +
+      '<div style="'+colorStyle('k-pen')+'">'+val('k-pen')+'</div>' +
+      '<div style="'+subStyle+'">'+val('k-pen-sub')+'</div></div>' +
+
+      /* Card 4 — Revenue Loss */
+      '<div style="'+cardStyle+'background:#f1f5f9;">' +
+      '<div style="'+titleStyle+';color:#f59e0b;">Revenue Loss</div>' +
+      '<div style="'+warnStyle+'">'+val('k-loss')+'</div>' +
+      '<div style="'+subStyle+'">Opportunity Loss</div></div>' +
+
+      /* Card 5 — Net DSM Payable */
+      '<div style="'+cardStyle+'background:#f1f5f9;">' +
+      '<div style="'+titleStyle+'">'+val('k-net-title')+'</div>' +
+      '<div style="'+colorStyle('k-net')+'">'+val('k-net')+'</div>' +
+      '<div style="'+subStyle+'">'+val('k-net-sub')+'</div>' +
+      '<div style="font-size:10px;color:#64748b;margin-top:3px;">'+val('k-net-ui')+'</div>' +
+      '<div style="font-size:10px;color:#64748b;">'+val('k-net-oi')+'</div></div>' +
+
+      /* Card 6 — Deviation Slots */
+      '<div style="'+cardStyle+'">' +
+      '<div style="'+titleStyle+'">Total Deviation Slots</div>' +
+      '<div style="'+valueStyle+'">'+val('k-slots')+'</div>' +
+      '<div style="'+subStyle+'">'+val('k-slots-sch')+'</div>' +
+      '<div style="'+subStyle+'">'+val('k-slots-act')+'</div></div>' +
+
+      '</div>' +
+      '<div style="font-size:10px;color:#94a3b8;text-align:right;margin-top:6px;">&#128295; DSM General Seller Tool &mdash; Developed by Pradeep</div>' +
+      '</div>';
+
+    /* Rich HTML copy — works on file:// protocol via execCommand */
+    try {
+      var tmp = document.createElement('div');
+      tmp.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+      tmp.innerHTML = html;
+      document.body.appendChild(tmp);
+
+      var range = document.createRange();
+      range.selectNodeContents(tmp);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      var success = document.execCommand('copy');
+      sel.removeAllRanges();
+      document.body.removeChild(tmp);
+
+      var btn = document.getElementById('btn-copy-cards');
+      var orig = btn.innerHTML;
+      if(success){
+        btn.innerHTML = '&#10003; Copied!';
+        btn.style.background = '#10b981';
+      } else {
+        /* Final fallback — try navigator.clipboard.writeText */
+        var plain = company + ' | ' + week + '\n' +
+          '─────────────────────────────\n' +
+          'UI DSM Payable  : ' + val('k-u-pay') + '\n' +
+          'OI DSM          : ' + val('k-o-rec') + '\n' +
+          val('k-pen-title') + ' : ' + val('k-pen') + '\n' +
+          'Revenue Loss    : ' + val('k-loss') + '\n' +
+          'Net DSM Payable : ' + val('k-net') + '\n' +
+          'Deviation Slots : ' + val('k-slots') + '\n' +
+          '─────────────────────────────\n' +
+          'DSM General Seller Tool — Developed by Pradeep';
+        navigator.clipboard.writeText(plain).then(function(){
+          btn.innerHTML = '&#10003; Copied (Text)!';
+          btn.style.background = '#f59e0b';
+        }).catch(function(){ alert('Copy failed. Try opening in Chrome.'); });
+      }
+      setTimeout(function(){ btn.innerHTML = orig; btn.style.background = '#6366f1'; }, 2500);
+    } catch(e) { alert('Copy error: ' + e.message); }
+  }
+</script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+    --primary:#4f46e5; --primary-dark:#4338ca; --text-main:#1e293b;
+    --text-muted:#64748b; --border:#e2e8f0; --bg-body:#f8fafc;
+    --card-bg:#ffffff; --danger:#ef4444; --success:#10b981; --warning:#f59e0b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg-body);color:var(--text-main);line-height:1.5;padding:20px;font-size:14px;}
+.container{max-width:1400px;margin:0 auto;background:var(--card-bg);border-radius:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);overflow:hidden;border:1px solid var(--border);}
+header{background:linear-gradient(135deg,var(--primary) 0%,#4338ca 100%);color:white;padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;}
+header h1{font-size:1.5rem;margin:0;font-weight:700;}
+header p{opacity:0.9;font-size:0.9rem;margin-top:4px;}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:#f1f5f9;}
+.tab-button{flex:1;padding:1rem;border:none;background:none;cursor:pointer;font-weight:600;color:var(--text-muted);transition:all 0.2s;border-bottom:3px solid transparent;}
+.tab-button:hover{background:#e2e8f0;color:var(--primary);}
+.tab-button.active{color:var(--primary);border-bottom-color:var(--primary);background:white;}
+.tab-content{display:none;padding:2rem;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.exec-header{background:linear-gradient(135deg,#f8fafc 0%,#e0e7ff 100%);border:1px solid var(--border);border-radius:8px;padding:15px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+.exec-header-left h2{font-size:1.2rem;color:var(--primary);margin:0;}
+.exec-header-left p{font-size:0.9rem;color:var(--text-muted);margin:0;}
+.exec-header-right{text-align:right;}
+.exec-header-right .label{font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;}
+.exec-header-right .value{font-size:1.1rem;color:var(--text-main);font-weight:700;margin-top:2px;}
+.exec-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:15px;margin-bottom:25px;}
+.kpi-card{background:white;border:1px solid var(--border);border-radius:8px;padding:15px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.kpi-title{font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;margin-bottom:5px;}
+.kpi-value{font-size:1.4rem;font-weight:700;color:var(--text-main);}
+.kpi-sub{font-size:0.8rem;margin-top:4px;color:var(--text-muted);}
+.chart-row{display:flex;gap:20px;margin-bottom:25px;height:380px;}
+.chart-box{flex:1;background:white;border:1px solid var(--border);border-radius:8px;padding:15px;display:flex;flex-direction:column;}
+.chart-box h4{margin:0 0 10px 0;font-size:0.95rem;font-weight:700;color:var(--text-main);text-align:center;border-bottom:1px solid #eee;padding-bottom:5px;}
+.focus-box{flex:1;background:white;border:1px solid var(--border);border-radius:8px;padding:15px;display:flex;flex-direction:column;}
+.focus-box h4{margin:0 0 10px 0;font-size:0.95rem;font-weight:700;color:var(--danger);border-bottom:1px solid #eee;padding-bottom:5px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1.5rem;}
+.form-group label{display:block;margin-bottom:0.5rem;font-weight:500;}
+.form-control{width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;}
+.form-control:focus{outline:none;border-color:var(--primary);}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:0.6rem 1.2rem;border-radius:6px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;font-size:0.9rem;margin-right:8px;}
+.btn-primary{background:var(--primary);color:white;}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-outline{background:white;border:1px solid var(--border);color:var(--text-main);}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);}
+.btn-sm{padding:4px 10px;font-size:0.8rem;background:#e0e7ff;color:var(--primary);border:1px solid #c7d2fe;}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin-top:15px;background:white;}
+table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+th{background:#f8fafc;color:var(--text-main);font-weight:600;text-align:left;padding:12px 15px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:10px 15px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background-color:#f8fafc;}
+tr.total-row td{background:#f1f5f9;font-weight:700;border-top:2px solid var(--border);}
+.inline-drill{background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:15px;padding:15px;display:none;border-left:4px solid var(--primary);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);}
+.drill-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;}
+.text-right{text-align:right;}
+.text-center{text-align:center;}
+.sign-neg{color:var(--danger);font-weight:700;}
+.sign-pos{color:var(--success);font-weight:700;}
+.sign-warn{color:var(--warning);font-weight:700;}
+.comment-input{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;background:#fffbeb;font-size:0.9rem;}
+.res-tabs{display:flex;gap:5px;margin-bottom:15px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.res-btn{padding:8px 16px;background:transparent;border:none;cursor:pointer;font-weight:600;color:var(--text-muted);}
+.res-btn.active{color:var(--primary);border-bottom:2px solid var(--primary);background:#f8fafc;}
+.step-bar{display:flex;margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1rem;}
+.step{flex:1;text-align:center;color:var(--text-muted);font-weight:500;}
+.step.active{color:var(--primary);font-weight:700;border-bottom:3px solid var(--primary);margin-bottom:-1rem;padding-bottom:1rem;}
+.no-data-msg{text-align:center;padding:40px;color:var(--text-muted);background:#f8fafc;border:1px dashed var(--border);border-radius:8px;font-size:0.95rem;}
+.info-badge{display:inline-block;background:#e0f2fe;color:#0369a1;padding:4px 8px;border-radius:4px;font-size:0.8rem;font-weight:600;margin-left:8px;}
+.freq-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px;}
+.freq-note{background:#fefce8;border:1px solid #fde047;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:0.88rem;color:#713f12;line-height:1.7;}
+.freq-note b{color:#451a03;}
+.missed-box{background:#fff1f2;border:1px solid #fecaca;border-radius:8px;padding:14px 18px;margin-top:20px;}
+.missed-box h4{color:#991b1b;margin:0 0 10px 0;}
+
+    /* ── Branding Footer ── */
+    .app-footer {
+        text-align: center;
+        padding: 10px 20px;
+        background: #1e293b;
+        color: rgba(255,255,255,0.65);
+        font-size: 0.78rem;
+        border-top: 2px solid #4f46e5;
+        letter-spacing: 0.3px;
+        margin-top: 0;
+    }
+    .app-footer .ft-tool  { color: #a5b4fc; font-weight: 700; }
+    .app-footer .ft-dev   { color: #34d399; font-weight: 700; }
+    .app-footer .ft-label { opacity: 0.7; }
+</style>
+<style id="print-css">
+@media print {
+  body{background:white !important;font-size:11px;}
+  .tabs,.no-print,#userguide{display:none !important;}
+  .tab-content{display:block !important;border:none !important;margin-bottom:0 !important;}
+  #reports,#freqbenefit{page-break-before:always;}
+  .container{max-width:100% !important;padding:6px !important;}
+  .exec-grid{grid-template-columns:repeat(3,1fr) !important;}
+  canvas{max-width:100% !important;}
+  .inline-drill{display:block !important;}
+  .print-header{display:block !important;}
+  @page{margin:12mm;size:A4 landscape;}
+}
+.print-header{display:none;border-bottom:2px solid #4f46e5;padding-bottom:8px;margin-bottom:14px;}
+.print-header-title{font-size:1.1rem;font-weight:700;color:#1e293b;margin:0;}
+.print-header-sub{font-size:0.76rem;color:#64748b;margin:2px 0 0;}
+.ug-link{display:flex;align-items:center;gap:8px;padding:7px 16px;color:rgba(255,255,255,0.78);
+  text-decoration:none;font-size:0.83rem;border-left:3px solid transparent;transition:all 0.15s;}
+.ug-link:hover{background:rgba(255,255,255,0.1);color:white;border-left:3px solid #a5b4fc;}
+#shared-banner{display:none;background:#1e293b;color:white;padding:9px 20px;
+  font-size:0.82rem;font-family:sans-serif;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+#shared-banner b{font-size:0.88rem;}
+#shared-banner .sb-meta{font-size:0.74rem;opacity:0.72;}
+#shared-banner .sb-badge{background:#4f46e5;color:white;padding:2px 9px;border-radius:12px;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.5px;}
+
+    .app-footer { display: block !important; border-top: 2px solid #4f46e5 !important; }
+
+    /* === RCA MODULE ===*/
+    .rca-summary-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.rca-kpi{flex:1;min-width:110px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.rca-kpi .rval{font-size:1.3rem;font-weight:800}.rca-kpi .rlbl{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+.rca-kpi.rred .rval{color:#ef4444}.rca-kpi.ryellow .rval{color:#f59e0b}
+.rca-kpi.rgreen .rval{color:#10b981}.rca-kpi.rblue .rval{color:#3b82f6}.rca-kpi.rpurple .rval{color:#8b5cf6}
+.rca-toolbar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;flex-wrap:wrap}
+.rca-toolbar h2{font-size:.92rem;font-weight:700;flex:1}
+.rca-fbtn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-main);cursor:pointer;font-size:.75rem;transition:all .2s}
+.rca-fbtn:hover,.rca-fbtn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.rca-row-tr{cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.rca-row-tr:hover td{background:#f1f5f9}
+.rca-row-tr td{padding:9px 10px;font-size:.8rem;vertical-align:middle}
+.dev-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700}
+.dev-OI{background:rgba(239,68,68,.12);color:#ef4444}.dev-UI{background:rgba(245,158,11,.12);color:#f59e0b}.dev-OK{background:rgba(16,185,129,.12);color:#10b981}
+.rca-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.dot-Open{background:#ef4444}.dot-InProgress{background:#f59e0b}.dot-Closed{background:#10b981}.dot-Disputed{background:#3b82f6}.dot-None{background:#94a3b8}
+.rca-expand-tr td{padding:0;border:none}
+.rca-panel{max-height:0;overflow:hidden;transition:max-height .4s ease;background:#f8faff}
+.rca-panel.open{max-height:3000px}
+.rca-inner{padding:16px 18px 20px;border-top:3px solid var(--primary)}
+.rca-ph{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,#ede9fe,#e0e7ff);border:1px solid #c4b5fd;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;font-weight:700}
+.rca-ph .rbadge{background:#7c3aed;color:#fff;padding:2px 8px;border-radius:10px;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}
+.rca-ph .rchint{margin-left:auto;font-size:.72rem;color:var(--text-muted);font-weight:400}
+.rca-stitle{font-size:.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:700px){.rgrid,.rgrid3{grid-template-columns:1fr}}
+.rca-field label{display:block;font-size:.7rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.rca-field input,.rca-field select,.rca-field textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text-main);padding:6px 10px;font-size:.8rem;resize:vertical;transition:border-color .2s}
+.rca-field input:focus,.rca-field select:focus,.rca-field textarea:focus{outline:none;border-color:var(--primary)}
+.rca-field textarea{min-height:65px}
+.rca-auto{background:#f1f5f9;border:1px dashed var(--border);border-radius:6px;padding:6px 10px;font-size:.8rem;color:var(--text-muted);min-height:32px;display:flex;align-items:center}
+.rca-auto.filled{color:var(--text-main);border-style:solid;background:#fff}
+.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:5px;margin-top:6px}
+.slot-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:5px 7px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
+.slot-card:hover{border-color:var(--primary)}.slot-card.selected{border-color:#7c3aed;background:#ede9fe}
+.slot-card .snum{font-size:.6rem;color:var(--text-muted)}.slot-card .stime{font-size:.68rem;font-weight:700}
+.slot-card .sdev{font-size:.7rem;font-weight:800;margin-top:1px}
+.slot-card .schk{position:absolute;top:2px;right:3px;color:#7c3aed;font-size:.6rem;display:none}
+.slot-card.selected .schk{display:block}
+.ftags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.ftag{padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s}
+.ftag.fi{background:rgba(79,70,229,.1);color:var(--primary);border-color:var(--primary)}
+.ftag.fe{background:rgba(239,68,68,.1);color:#ef4444;border-color:#ef4444}
+.ftag.fs{background:rgba(245,158,11,.1);color:#f59e0b;border-color:#f59e0b}
+.ftag:not(.sel-tag){opacity:.4}.ftag.sel-tag{opacity:1;transform:scale(1.04)}
+.disp-flag{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:.78rem;margin-top:10px;color:#1d4ed8}
+.rca-acts{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap}
+#rcaToast{position:fixed;bottom:20px;right:20px;background:#10b981;color:#fff;padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.15);opacity:0;transform:translateY(18px);transition:all .3s;pointer-events:none;z-index:9999}
+#rcaToast.show{opacity:1;transform:translateY(0)}
+/* ══════════════════════════════════════════════════ */
+
+/* ═══ RCA ANALYTICS CSS ═══════════════════════════════════ */
+.rca-analytics{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.rca-analytics h3{font-size:.9rem;font-weight:700;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.pareto-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid var(--border)}
+.pareto-controls label{font-size:.75rem;font-weight:600;color:var(--text-muted)}
+.pareto-controls input[type=number]{width:90px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:.8rem}
+.pareto-controls input[type=range]{width:130px;accent-color:var(--primary)}
+.factor-filter-strip{display:flex;gap:6px;flex-wrap:wrap}
+.ffs-btn{padding:4px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s}
+.ffs-btn.active-all{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ffs-btn.active-int{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.ffs-btn.active-ext{background:#ef4444;color:#fff;border-color:#ef4444}
+.ffs-btn.active-semi{background:#f59e0b;color:#fff;border-color:#f59e0b}
+.pareto-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:768px){.pareto-grid{grid-template-columns:1fr}}
+.pareto-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;position:relative}
+.pareto-card h4{font-size:.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.pareto-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;transition:background .15s;padding:3px 4px;border-radius:5px}
+.pareto-bar-row:hover{background:#f1f5f9}
+.pareto-bar-label{font-size:.75rem;font-weight:600;width:130px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pareto-bar-track{flex:1;background:#f1f5f9;border-radius:4px;height:16px;overflow:hidden;position:relative}
+.pareto-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:5px}
+.pareto-bar-fill span{font-size:.65rem;font-weight:700;color:#fff;white-space:nowrap}
+.pareto-bar-val{font-size:.72rem;font-weight:700;width:80px;text-align:right;flex-shrink:0}
+.top80-badge{background:linear-gradient(90deg,#7c3aed,#4f46e5);color:#fff;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:800;margin-left:6px;vertical-align:middle}
+.pareto-insight{background:linear-gradient(90deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:.82rem;margin-bottom:14px}
+.pareto-insight strong{color:#92400e}
+.key-reason-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.kr-chip{padding:5px 12px;border-radius:20px;font-size:.74rem;font-weight:700;border:1.5px solid transparent}
+.kr-chip.c-int{background:#ede9fe;color:#4f46e5;border-color:#c4b5fd}
+.kr-chip.c-ext{background:#fee2e2;color:#ef4444;border-color:#fecaca}
+.kr-chip.c-semi{background:#fef3c7;color:#f59e0b;border-color:#fde68a}
+/* ══════════════════════════════════════════════════ */
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div><h1>DSM General Seller Dashboard</h1><p>Generation Deviation Settlement &mdash; CERC DSM Regulations</p></div>
+        <div style="text-align:right;"><span style="background:rgba(255,255,255,0.2);padding:5px 10px;border-radius:4px;font-size:0.85rem;">Accountant Mode (10x)</span></div>
+    </header>
+    <div id="shared-banner" style="display:none;"><div><span class="sb-badge">&#128202; SHARED VIEW</span> &nbsp;<b id="sb-title">DSM General Seller Dashboard</b></div><div class="sb-meta" id="sb-meta">Snapshot generated: &mdash;</div></div>
+    <div class="print-header" id="print-hdr"><p class="print-header-title" id="ph-title">DSM General Seller Dashboard</p><p class="print-header-sub" id="ph-sub">Confidential</p>
+        <button class="tab-button" onclick="switchTab('dbsave')" style="color:#059669;font-weight:700;">&#128190; DSM Database</button>
+        <button class="tab-button" onclick="switchTab('dbview')" style="color:#2563eb;font-weight:700;">&#128214; Records Viewers</button>
+</div>
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('manual')">Manual Entry</button>
+        <button class="tab-button" onclick="switchTab('excel')">Excel Upload</button>
+        <button class="tab-button" onclick="switchTab('exec')">Executive Summary</button>
+        <button class="tab-button" onclick="switchTab('results')">Detailed Reports</button>
+        <button class="tab-button" onclick="switchTab('freqbenefit')" style="color:#0369a1;font-weight:700;">&#9889; Freq Benefit</button>
+        <button class="tab-button no-print" onclick="switchTab('userguide')" style="color:#4f46e5;font-weight:700;">&#128218; User Guide</button>
+    
+    <button class="tab-button" onclick="switchTab('rca')" style="color:#7c3aed;font-weight:700;"><i class="fas fa-search"></i> RCA Register</button>
+    
+        <button class="tab-button" onclick="switchTab('dbsave')" style="color:#059669;font-weight:700;">&#128190; DSM Database</button>
+        <button class="tab-button" onclick="switchTab('dbview')" style="color:#2563eb;font-weight:700;">&#128214; Records Viewers</button>
+</div>
+
+    <!-- MANUAL ENTRY -->
+    <div id="manual" class="tab-content" style="display:block;">
+        <div class="form-grid">
+            <div class="form-group"><label>Company Name</label><input type="text" id="m-company" class="form-control" placeholder="Enter company name"></div>
+            <div class="form-group"><label>Week Number</label><input type="text" id="m-week" class="form-control" placeholder="e.g., Week 7 or W07"></div>
+            <div class="form-group"><label>Date</label><input type="date" id="m-date" class="form-control"></div>
+            <div class="form-group"><label>Time Slot</label><select id="m-time" class="form-control"></select></div>
+            <div class="form-group"><label>Scheduled (MWh)</label><input type="number" id="m-sch" class="form-control" placeholder="0.00"></div>
+            <div class="form-group"><label>Actual (MWh)</label><input type="number" id="m-act" class="form-control" placeholder="0.00"></div>
+            <div class="form-group"><label>PPA Rate (&#8377;/MWh)</label><input type="number" id="m-rate" class="form-control" placeholder="0.00"></div>
+            <div class="form-group"><label>Frequency (Hz)</label><input type="number" id="m-freq" class="form-control" placeholder="50.00"></div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateManual()"><i class="fas fa-calculator"></i> Process Entry</button>
+    </div>
+
+    <!-- EXCEL UPLOAD -->
+    <div id="excel" class="tab-content">
+        <div class="form-grid" style="margin-bottom:1rem;">
+            <div class="form-group"><label>Company Name</label><input type="text" id="e-company" class="form-control" placeholder="Enter company name"></div>
+            <div class="form-group"><label>Week Number</label><input type="text" id="e-week" class="form-control" placeholder="e.g., Week 7 or W07"></div>
+        </div>
+        <div class="step-bar">
+            <div class="step active" id="st1">1. Upload File</div>
+            <div class="step" id="st2">2. Select Sheet</div>
+            <div class="step" id="st3">3. Map Columns</div>
+        </div>
+        <div id="u-stage">
+            <p style="color:var(--text-muted);margin-bottom:10px;">Upload your Excel file (.xlsx / .xls) containing DSM data:</p>
+            <input type="file" id="file-input" class="form-control" accept=".xlsx,.xls">
+        </div>
+        <div id="s-stage" style="display:none;margin-top:20px;">
+            <h4 style="margin-bottom:10px;">Select Sheet to Process:</h4>
+            <div id="sheet-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+        </div>
+        <div id="m-stage" style="display:none;margin-top:20px;">
+            <div style="background:#e0f2fe;padding:10px;border-radius:6px;margin-bottom:15px;display:flex;align-items:center;gap:15px;">
+                <label style="color:#0369a1;font-weight:700;white-space:nowrap;">Header Row:</label>
+                <select id="head-row" class="form-control" style="width:auto;" onchange="remapHeaders()"></select>
+                <span style="color:#0369a1;font-size:0.85rem;">Select the row that contains column headers</span>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Date Column</label><select id="c-date" class="form-control"></select></div>
+                <div class="form-group"><label>Time Column</label><select id="c-time" class="form-control"></select></div>
+                <div class="form-group"><label>Scheduled (MWh)</label><select id="c-sch" class="form-control"></select></div>
+                <div class="form-group"><label>Actual (MWh)</label><select id="c-act" class="form-control"></select></div>
+                <div class="form-group"><label>Frequency (Hz)</label><select id="c-freq" class="form-control"></select></div>
+                <div class="form-group"><label>Rate (&#8377;/MWh)</label><select id="c-rate" class="form-control"></select></div>
+            </div>
+            <button class="btn btn-primary" onclick="processBatch()"><i class="fas fa-cogs"></i> Generate Audit Report</button>
+        </div>
+    </div>
+
+    <!-- EXECUTIVE SUMMARY -->
+    <div id="exec" class="tab-content">
+        <div id="no-res-exec" class="no-data-msg">No data processed yet. Please use Manual Entry or Excel Upload first.</div>
+        <div class="no-print" id="action-btns" style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;"><button onclick="printDashboard()" style="background:#4f46e5;color:white;padding:7px 18px;border:none;border-radius:6px;cursor:pointer;font-size:0.83rem;font-weight:600;">&#128438; Print Dashboard</button><button onclick="saveDashboard()" id="btn-save" style="background:#10b981;color:white;padding:7px 18px;border:none;border-radius:6px;cursor:pointer;font-size:0.83rem;font-weight:600;">&#128190; Save &amp; Share</button><button onclick="copyCards()" id="btn-copy-cards" style="background:#6366f1;color:white;padding:7px 18px;border:none;border-radius:6px;cursor:pointer;font-size:0.83rem;font-weight:600;">&#128203; Copy Cards</button></div>
+        <div id="exec-dash" style="display:none;">
+            <div class="exec-header">
+                <div class="exec-header-left">
+                    <h2 id="exec-company">DSM Audit Report</h2>
+                    <p id="exec-subtitle">Generation Deviation Settlement Analysis &mdash; CERC DSM Regulations</p>
+                </div>
+                <div class="exec-header-right">
+                    <div class="label">Reporting Period</div>
+                    <div class="value" id="exec-week">-</div>
+                </div>
+            </div>
+            <div class="exec-grid">
+                <div class="kpi-card"><div class="kpi-title">Under Injection DSM</div><div class="kpi-value sign-neg" id="k-u-pay">&#8377;0</div><div class="kpi-sub" id="k-u-vol">0 MWh</div></div>
+                <div class="kpi-card"><div class="kpi-title" id="k-oi-title">Over Injection DSM</div><div class="kpi-value" id="k-o-rec">&#8377;0</div><div class="kpi-sub" id="k-o-vol">0 MWh</div></div>
+                <div class="kpi-card"><div class="kpi-title" id="k-pen-title" style="color:var(--danger);">Total Penalty</div><div class="kpi-value" id="k-pen">&#8377;0</div><div class="kpi-sub" id="k-pen-sub">DSM Cost &gt; PPA Rate</div></div>
+                <div class="kpi-card" style="background:#f1f5f9;"><div class="kpi-title" style="color:var(--warning);">Revenue Loss</div><div class="kpi-value sign-warn" id="k-loss">&#8377;0</div><div class="kpi-sub">Opportunity Loss</div></div>
+                <div class="kpi-card" style="background:#f1f5f9;"><div class="kpi-title" id="k-net-title">Net DSM Payable</div><div class="kpi-value" id="k-net">&#8377;0</div><div class="kpi-sub" id="k-net-sub">Final Settlement</div><div class="kpi-sub" id="k-net-ui" style="margin-top:4px;font-size:0.73rem;color:#64748b;">&#8627; UI Payable: &#8377;0</div><div class="kpi-sub" id="k-net-oi" style="font-size:0.73rem;color:#64748b;">&#8627; OI Receivable: &#8377;0</div></div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Deviation Slots</div>
+                    <div class="kpi-value" id="k-slots">0</div>
+                    <div class="kpi-sub" id="k-slots-sub">-</div>
+                    <div class="kpi-sub" id="k-slots-sch" style="margin-top:5px;font-size:0.75rem;">Sch: 0 MWh</div>
+                    <div class="kpi-sub" id="k-slots-act" style="font-size:0.75rem;">Act: 0 MWh</div>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-box" style="flex:1.2;"><h4>&#128202; Slot Distribution (Count)</h4><canvas id="slotChart"></canvas></div>
+                <div class="chart-box" style="flex:1.2;"><h4>&#128181; Financial Components (&#8377;)</h4><canvas id="finChart"></canvas></div>
+                <div class="focus-box" style="flex:0.8;">
+                    <h4>&#128680; Top 10 Penalty Slots</h4>
+                    <div class="table-wrap" style="margin-top:0;max-height:300px;overflow-y:auto;box-shadow:none;border:none;">
+                        <table><thead><tr><th>Date / Time</th><th class="text-right">Penalty / Saving (&#8377;)</th></tr></thead><tbody id="top-pen-body"></tbody></table>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-box" style="height:350px;margin-bottom:25px;">
+                <h4>&#128200; Day-wise Trend &#8212; Penalty vs Revenue Loss</h4>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="chart-box" style="height:500px;margin-bottom:25px;">
+                <h4 style="color:#0369a1;">&#128337; Cumulative Slot-wise Impact (Recurring Patterns &#8212; 2+ Days)</h4>
+                <div id="cumulative-slot-no-data" class="no-data-msg" style="display:none;">No recurring penalty or loss patterns found across multiple days.</div>
+                <canvas id="cumulativeSlotChart"></canvas>
+            </div>
+            <div class="chart-row" style="height:500px;margin-bottom:25px;">
+                <div class="chart-box">
+                    <h4 style="color:var(--danger);">&#9888; Penalty Blocks (&gt;1 Day Recurring) <span class="info-badge" id="penalty-count-badge">0 blocks</span></h4>
+                    <div id="penalty-block-no-data" class="no-data-msg" style="display:none;">No recurring penalty blocks found.</div>
+                    <canvas id="penaltyBlockChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h4 style="color:var(--warning);">&#9888; Loss Blocks (&gt;1 Day Recurring) <span class="info-badge" id="loss-count-badge">0 blocks</span></h4>
+                    <div id="loss-block-no-data" class="no-data-msg" style="display:none;">No recurring loss blocks found.</div>
+                    <canvas id="lossBlockChart"></canvas>
+                </div>
+            </div>
+            <div style="text-align:right;margin-top:10px;">
+                <button class="btn btn-outline" onclick="genHTML()"><i class="fas fa-share-alt"></i> Share as HTML + Email</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAILED REPORTS -->
+    <div id="results" class="tab-content">
+        <div id="res-dash" style="display:none;">
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px;">
+                <button class="btn btn-outline" onclick="genPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                <button class="btn btn-primary" onclick="genExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+            </div>
+            <div class="res-tabs">
+                <button class="res-btn active" id="btn-u"   onclick="subTab('under')">&#128308; Under Injection</button>
+                <button class="res-btn"        id="btn-o"   onclick="subTab('over')">&#128994; Over Injection</button>
+                <button class="res-btn"        id="btn-oi"  onclick="subTab('oiimpact')" style="color:#10b981;font-weight:700;">&#128200; Impact of OI</button>
+                <button class="res-btn"        id="btn-ui2" onclick="subTab('uiimpact')" style="color:#ef4444;font-weight:700;">&#128201; Impact of UI</button>
+                <button class="res-btn"        id="btn-m"   onclick="subTab('mat')"  style="color:var(--danger);">&#9888; Material Deviations</button>
+                <button class="res-btn"        id="btn-a"   onclick="subTab('annex')">&#128196; Full Annexure</button>
+            </div>
+
+            <!-- UNDER INJECTION -->
+            <div id="v-under">
+                <h3 style="margin-bottom:10px;color:var(--danger);">Under Injection &#8212; Slab-wise Summary</h3>
+                <div class="table-wrap">
+                    <table><thead><tr>
+                        <th>Component Slab</th>
+                        <th class="text-right">Energy (MWh)</th>
+                        <th class="text-right">Value @ Ref Rate (&#8377;)</th>
+                        <th class="text-right">Actual DSM Payable (&#8377;)</th>
+                        <th class="text-right">Penalty / Saving (&#8377;)</th>
+                        <th class="text-center">Drill Down</th>
+                    </tr></thead><tbody id="tb-under"></tbody></table>
+                </div>
+                <div class="freq-note" style="margin-top:10px;background:#eff6ff;border-color:#bfdbfe;"><b>&#9432; Penalty / Saving</b> = Actual DSM Payable &minus; Value @ Ref Rate. &nbsp;<span style="color:#dc2626;font-weight:600;">&#9650; Positive (Red) = Penalty</span> (DSM cost &gt; ref rate). &nbsp;<span style="color:#16a34a;font-weight:600;">&#9660; Negative (Green) = Saving</span> (DSM cost &lt; ref rate, high freq discount).</div>
+                <div id="drill-u" class="inline-drill">
+                    <div class="drill-header"><h4 style="margin:0;color:var(--primary);">Slot-wise Detail</h4><button class="btn btn-sm" onclick="hideDrill('u')">&#10005; Close</button></div>
+                    <div class="table-wrap" style="max-height:400px;margin-top:0;">
+                        <table><thead><tr><th>Date</th><th>Time</th><th>Freq</th><th class="text-right">Sch</th><th class="text-right">Act</th><th class="text-right">Dev%</th><th class="text-right">DSM (&#8377;)</th><th style="background:#fffbeb;" class="text-right">Slab Penalty (&#8377;)</th><th class="text-right">Total Penalty (&#8377;)</th></tr></thead><tbody id="dt-body-u"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OVER INJECTION -->
+            <div id="v-over" style="display:none;">
+                <h3 style="margin-bottom:10px;color:var(--success);">Over Injection &#8212; Slab-wise Summary</h3>
+                <div class="table-wrap">
+                    <table><thead><tr>
+                        <th>Component Slab</th>
+                        <th class="text-right">Energy (MWh)</th>
+                        <th class="text-right">Value @ Ref Rate (&#8377;)</th>
+                        <th class="text-right">Actual DSM Receivable (&#8377;)</th>
+                        <th class="text-right">Revenue Loss (&#8377;)</th>
+                        <th class="text-center">Drill Down</th>
+                    </tr></thead><tbody id="tb-over"></tbody></table>
+                </div>
+                <div id="drill-o" class="inline-drill">
+                    <div class="drill-header"><h4 style="margin:0;color:var(--primary);">Slot-wise Detail</h4><button class="btn btn-sm" onclick="hideDrill('o')">&#10005; Close</button></div>
+                    <div class="table-wrap" style="max-height:400px;margin-top:0;">
+                        <table><thead><tr><th>Date</th><th>Time</th><th>Freq</th><th class="text-right">Sch</th><th class="text-right">Act</th><th class="text-right">Dev%</th><th class="text-right">DSM (&#8377;)</th><th style="background:#fffbeb;" class="text-right">Slab Loss (&#8377;)</th><th class="text-right">Zero Pay Loss (&#8377;)</th></tr></thead><tbody id="dt-body-o"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IMPACT OF OI -->
+            <div id="v-oiimpact" style="display:none;">
+                <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:8px;padding:15px 20px;margin-bottom:20px;">
+                    <h3 style="color:#166534;margin:0 0 4px 0;font-size:1.05rem;">&#9654; Impact of Over Injection on Revenue</h3>
+                    <p style="color:#15803d;font-size:0.85rem;margin:0 0 12px 0;">Compare actual DSM receivable rate vs weighted average PPA rate to assess net financial impact</p>
+                    <div style="display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;">
+                        <div class="form-group" style="margin:0;"><label style="font-size:0.85rem;font-weight:700;color:#166534;">Weighted Avg Market Rate (&#8377;/MWh)</label><input type="number" id="oi-wtd-rate" class="form-control" placeholder="e.g. 3800" style="width:160px;margin-top:4px;" oninput="calcOIImpact()"></div>
+                        <div style="font-size:0.8rem;color:#166534;background:#bbf7d0;padding:8px 12px;border-radius:6px;max-width:380px;line-height:1.8;"><b>Net DSM Rate</b> = Total Receivable &#247; Units (MWh)<br><b>Difference</b> = Wtd Avg Rate &#8722; Net DSM Rate<br><b>Net Impact</b> = Difference &#215; Units (MWh)</div>
+                    </div>
+                </div>
+                <div id="oi-no-data" class="no-data-msg" style="display:none;">No over-injection data found.</div>
+                <div id="oi-table-wrap">
+                    <div class="table-wrap">
+                        <table><thead><tr style="background:#f0fdf4;">
+                            <th>Slab</th>
+                            <th class="text-right">Units (MWh)</th>
+                            <th class="text-right">Total Receivable (&#8377;)</th>
+                            <th class="text-right">Net DSM Rate (&#8377;/MWh)</th>
+                            <th class="text-right">Wtd Avg Rate (&#8377;/MWh)</th>
+                            <th class="text-right">Difference (&#8377;/MWh)</th>
+                            <th class="text-right">Net Impact (&#8377;)</th>
+                        </tr></thead><tbody id="tb-oi-impact"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IMPACT OF UI -->
+            <div id="v-uiimpact" style="display:none;">
+                <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1px solid #fecaca;border-radius:8px;padding:15px 20px;margin-bottom:20px;">
+                    <h3 style="color:#991b1b;margin:0 0 4px 0;font-size:1.05rem;">&#9654; Impact of Under Injection on Cost</h3>
+                    <p style="color:#b91c1c;font-size:0.85rem;margin:0 0 12px 0;">Compare actual DSM payable rate vs weighted average PPA rate to assess net cost impact</p>
+                    <div style="display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;">
+                        <div class="form-group" style="margin:0;"><label style="font-size:0.85rem;font-weight:700;color:#991b1b;">Weighted Avg Market Rate (&#8377;/MWh)</label><input type="number" id="ui-wtd-rate" class="form-control" placeholder="e.g. 3800" style="width:160px;margin-top:4px;" oninput="calcUIImpact()"></div>
+                        <div style="font-size:0.8rem;color:#991b1b;background:#fecaca;padding:8px 12px;border-radius:6px;max-width:380px;line-height:1.8;"><b>Net DSM Rate</b> = Total Payable &#247; Units (MWh)<br><b>Difference</b> = Wtd Avg Rate &#8722; Net DSM Rate<br><b>Net Impact</b> = Difference &#215; Units (MWh)</div>
+                    </div>
+                </div>
+                <div id="ui-no-data" class="no-data-msg" style="display:none;">No under-injection data found.</div>
+                <div id="ui-table-wrap">
+                    <div class="table-wrap">
+                        <table><thead><tr style="background:#fff1f2;">
+                            <th>Slab</th>
+                            <th class="text-right">Units (MWh)</th>
+                            <th class="text-right">Total Payable (&#8377;)</th>
+                            <th class="text-right">Net DSM Rate (&#8377;/MWh)</th>
+                            <th class="text-right">Wtd Avg Rate (&#8377;/MWh)</th>
+                            <th class="text-right">Difference (&#8377;/MWh)</th>
+                            <th class="text-right">Net Impact (&#8377;)</th>
+                        </tr></thead><tbody id="tb-ui-impact"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATERIAL DEVIATIONS -->
+            <div id="v-mat" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;flex-wrap:wrap;gap:10px;">
+                    <div><h3 style="color:var(--danger);font-size:1.1rem;margin:0;">&#9888; Material Deviation Slots</h3><p style="color:var(--text-muted);font-size:0.85rem;margin:4px 0 0;">Slots exceeding the financial threshold &#8212; add remarks for audit trail</p></div>
+                    <div style="display:flex;align-items:center;gap:10px;"><label style="font-weight:600;">Threshold (&#8377;):</label><input type="number" id="mat-limit" class="form-control" value="5000" style="width:120px;" onchange="fillMat()"></div>
+                </div>
+                <div class="table-wrap"><table id="tb-mat"><thead><tr><th>Date</th><th>Time</th><th>Type</th><th class="text-right">Dev %</th><th class="text-right">DSM (&#8377;)</th><th class="text-right">Penalty / Loss (&#8377;)</th><th style="width:300px;">Audit Remarks</th></tr></thead><tbody></tbody></table></div>
+            </div>
+
+            <!-- FULL ANNEXURE -->
+            <div id="v-annex" style="display:none;">
+                <h3 style="margin-bottom:10px;color:var(--text-main);">&#128196; Full Slot Ledger &#8212; All Deviation Records</h3>
+                <div class="table-wrap" style="max-height:600px;overflow-y:auto;">
+                    <table id="tb-annex"><thead><tr><th>Date</th><th>Time</th><th>Freq (Hz)</th><th class="text-right">Scheduled (MWh)</th><th class="text-right">Actual (MWh)</th><th class="text-right">Dev %</th><th class="text-right">DSM (&#8377;)</th><th class="text-right">Penalty / Loss (&#8377;)</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FREQUENCY BENEFIT TAB -->
+    <div id="freqbenefit" class="tab-content">
+        <div id="fb-no-data" class="no-data-msg">No data processed yet. Please use Manual Entry or Excel Upload first.</div>
+        <div id="fb-dash" style="display:none;">
+            <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:8px;padding:15px 20px;margin-bottom:20px;">
+                <h2 style="color:#1e40af;margin:0 0 4px 0;font-size:1.1rem;">&#9889; Frequency Benefit Analysis &#8212; Over Injection during Low Frequency</h2>
+                <p style="color:#1d4ed8;font-size:0.85rem;margin:0;">Slots where frequency was between 49.90 Hz and 49.97 Hz (low frequency band)</p>
+            </div>
+            <div class="freq-note">
+                <b>How CERC DSM rewards Over Injection during Low Frequency:</b><br>
+                When grid frequency falls between <b>49.90 Hz and 49.97 Hz</b>, a generator that over-injects is helping stabilise the grid.
+                CERC DSM rewards this by applying a <b>multiplier &gt; 1.0</b> on Slab 1 receivable (interpolated between 1.0 at 49.97 Hz and 1.15 at 49.90 Hz).<br>
+                <b>Bonus = Actual Receivable &#8722; Reference Receivable</b> (i.e., the extra amount earned above the normal rate).<br>
+                Slab 2 receivable remains <b>zero</b> (multiplier = 0) until frequency drops below 49.90 Hz where multiplier becomes &#8722;0.1 (payable).
+            </div>
+            <div class="freq-kpi-grid">
+                <div class="kpi-card" style="border-top:4px solid #3b82f6;"><div class="kpi-title">OI Bonus Slots</div><div class="kpi-value" id="fb-slots" style="color:#1d4ed8;">0</div><div class="kpi-sub">49.90&#8211;49.97 Hz</div></div>
+                <div class="kpi-card" style="border-top:4px solid #10b981;"><div class="kpi-title">Total Q1 Energy</div><div class="kpi-value" id="fb-energy" style="color:#047857;">0 MWh</div><div class="kpi-sub">Over-injected in band</div></div>
+                <div class="kpi-card" style="border-top:4px solid #8b5cf6;"><div class="kpi-title">Total Bonus Earned</div><div class="kpi-value" id="fb-bonus" style="color:#6d28d9;">&#8377;0</div><div class="kpi-sub">Above reference rate</div></div>
+                <div class="kpi-card" style="border-top:4px solid #ef4444;"><div class="kpi-title">Missed Opportunity</div><div class="kpi-value" id="fb-missed" style="color:#dc2626;">&#8377;0</div><div class="kpi-sub">UI slots in low freq band</div></div>
+            </div>
+
+            <h3 style="margin-bottom:8px;color:#1e40af;font-size:1rem;">&#9654; Over Injection Bonus Slots (49.90 &#8804; F &lt; 49.97 Hz)</h3>
+            <div id="fb-oi-no" class="no-data-msg" style="display:none;">No over-injection slots found in the 49.90&#8211;49.97 Hz frequency band.</div>
+            <div class="table-wrap" id="fb-oi-wrap">
+                <table><thead><tr>
+                    <th>Date</th><th>Time</th><th>Freq (Hz)</th>
+                    <th class="text-right">Sch (MWh)</th>
+                    <th class="text-right">Act (MWh)</th>
+                    <th class="text-right">Dev %</th>
+                    <th class="text-right">Q1 (MWh)</th>
+                    <th class="text-right">Multiplier</th>
+                    <th class="text-right">Ref Receivable (&#8377;)</th>
+                    <th class="text-right">Actual Receivable (&#8377;)</th>
+                    <th class="text-right" style="color:#6d28d9;background:#f5f3ff;">Bonus Earned (&#8377;)</th>
+                </tr></thead><tbody id="fb-oi-body"></tbody></table>
+            </div>
+
+            <div class="missed-box">
+                <h4>&#128683; Missed Opportunity &#8212; Under Injection during Low Frequency (49.90 &#8804; F &lt; 49.97 Hz)</h4>
+                <p style="font-size:0.82rem;color:#7f1d1d;margin-bottom:10px;">These are slots where you UNDER-injected while frequency was low. Had you over-injected instead, you would have earned a bonus above the reference DSM rate.</p>
+                <div id="fb-ui-no" class="no-data-msg" style="display:none;background:#fff1f2;border-color:#fecaca;">No under-injection slots found in the 49.90&#8211;49.97 Hz frequency band.</div>
+                <div class="table-wrap" id="fb-ui-wrap" style="margin-top:0;">
+                    <table><thead><tr>
+                        <th>Date</th><th>Time</th><th>Freq (Hz)</th>
+                        <th class="text-right">Sch (MWh)</th>
+                        <th class="text-right">Act (MWh)</th>
+                        <th class="text-right">Dev %</th>
+                        <th class="text-right">UI Q1 (MWh)</th>
+                        <th class="text-right">DSM Payable (&#8377;)</th>
+                        <th class="text-right" style="color:#dc2626;background:#fff1f2;">Opp. Loss (&#8377;)</th>
+                    </tr></thead><tbody id="fb-ui-body"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="dbsave" class="tab-content">
+      <div class="exec-header">
+        <div class="exec-header-left">
+          <h2>DSM Weekly Database — Save &amp; Retrieve</h2>
+          <p>Save the current DSM run with unit, week, year and type metadata.</p>
+        </div>
+        <div class="exec-header-right">
+          <div class="label">Database Key</div>
+          <div class="value">Plant Name + Week No. + Year + Type</div>
+        </div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:18px;background:#fff;margin-bottom:14px;">
+        <div class="form-grid" style="grid-template-columns:1.2fr 1fr 1fr 1fr auto;align-items:end;">
+          <div class="form-group"><label>Plant Name</label><input id="db-unit" class="form-control" placeholder="e.g. Kutch Wind 1"></div>
+          <div class="form-group"><label>Week Number</label><input id="db-week" class="form-control" placeholder="27"></div>
+          <div class="form-group"><label>Year</label><input id="db-year" class="form-control" placeholder="2026"></div>
+          <div class="form-group"><label>Type</label><select id="db-type" class="form-control"><option>Drawal</option><option>Injection</option></select></div>
+          <div class="form-group"><button class="btn btn-primary" style="width:100%;height:40px" onclick="useCurrentDSMData()"><i class="fas fa-pencil-alt"></i> Use Current Data</button></div>
+        </div>
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="form-group"><label>RCA Summary / Notes</label><textarea id="db-rca" class="form-control" rows="4" placeholder="Enter RCA summary, key findings, responsible team notes for this week..."></textarea></div>
+        <div class="form-group"><label>Monitoring Plan / Action Tracker</label><textarea id="db-plan" class="form-control" rows="4" placeholder="Enter monitoring plan, actions, owner, target week, effectiveness check..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <button class="btn btn-primary" style="background:#16a34a;color:#fff;" onclick="saveDSMRecord()"><i class="fas fa-save"></i> Save DSM Record</button>
+        <button class="btn btn-primary" style="background:#0f766e;color:#fff;" onclick="retrieveDSMRecord()"><i class="fas fa-download"></i> Retrieve DSM Record</button>
+        <button class="btn btn-primary" style="background:#7c3aed;color:#fff;" onclick="exportAllDSMRecords()"><i class="fas fa-file-export"></i> Export All Records (JSON)</button>
+        <button class="btn btn-primary" style="background:#d97706;color:#fff;" onclick="document.getElementById('db-import').click()"><i class="fas fa-file-import"></i> Import Records (JSON)</button>
+        <input id="db-import" type="file" accept="application/json" style="display:none" onchange="importDSMRecords(event)">
+      </div>
+      <div id="db-status" class="info-badge">No saved DSM records yet.</div>
+      <div class="exec-grid" style="margin-top:14px;grid-template-columns:repeat(5,1fr)">
+        <div class="kpi-card"><div class="kpi-title">Total Records</div><div class="kpi-value" id="db-total">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Unique Plants</div><div class="kpi-value" id="db-units">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Unique Weeks</div><div class="kpi-value" id="db-weeks">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Drawal Records</div><div class="kpi-value" id="db-drawal">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Injection Records</div><div class="kpi-value" id="db-infirm">0</div></div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px;">
+        <table><thead><tr><th>Plant Name</th><th>Week</th><th>Year</th><th>Type</th><th>Company</th><th>Config</th><th>Total Blocks</th><th>Net DSM (&#8377;)</th><th>Open RCA</th><th>Saved On</th><th>Actions</th></tr></thead><tbody id="dbsave-body"></tbody></table>
+      </div>
+    </div>
+
+    <div id="dbview" class="tab-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h2 style="font-size:1.2rem;margin:0;display:flex;align-items:center;gap:8px;"><i class="fas fa-layer-group"></i> Saved Records Viewer <span id="dbview-count" class="info-badge">0</span></h2>
+        <button class="btn btn-outline" onclick="renderDSMViewer()"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+      <div class="form-grid" style="grid-template-columns:auto auto 1fr auto auto;gap:12px;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;margin-bottom:18px;align-items:center;">
+        <div class="form-group" style="margin:0"><label>COMPANY</label><select id="db-f-company" class="form-control"><option>All Companies</option></select></div>
+        <div class="form-group" style="margin:0"><label>YEAR</label><select id="db-f-year" class="form-control"><option>All Years</option></select></div>
+        <div class="form-group" style="margin:0"><label>WEEK</label><input id="db-f-week" class="form-control" placeholder="e.g. 24"></div>
+        <div class="form-group" style="margin:0"><label>TYPE</label><select id="db-f-type" class="form-control"><option>All Types</option><option>Drawal</option><option>Injection</option></select></div>
+        <div class="form-group" style="margin:0"><label>RCA</label><select id="db-f-rca" class="form-control"><option>All Records</option><option>Open RCA</option><option>Closed RCA</option></select></div>
+        <button class="btn btn-outline" onclick="clearDSMViewerFilters()">&times; Clear</button>
+      </div>
+      <div id="dbview-empty" class="no-data-msg">No records match the current filters.</div>
+      <div class="table-wrap" id="dbview-wrap" style="display:none">
+        <table><thead><tr><th>Plant Name</th><th>Week</th><th>Year</th><th>Type</th><th>Company</th><th>Config</th><th>Total Blocks</th><th>Net DSM (&#8377;)</th><th>Open RCA</th><th>Saved On</th><th>Actions</th></tr></thead><tbody id="dbview-body"></tbody></table>
+      </div>
+    </div>
+<div id="userguide" class="tab-content">
+      <div style="display:flex;gap:0;min-height:80vh;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-top:4px;">
+        <nav style="width:225px;min-width:185px;background:#4f46e5;padding:16px 0 40px 0;flex-shrink:0;">
+          <div style="padding:3px 14px 5px;font-size:0.66rem;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1.2px;text-transform:uppercase;margin-top:3px;">Getting Started</div>
+          <a href="#ug-start" class="ug-link">&#9889; Quick Start</a>
+          <a href="#ug-manual" class="ug-link">&#9999;&#65039; Manual Entry</a>
+          <a href="#ug-excel" class="ug-link">&#128194; Excel Upload</a>
+          <a href="#ug-workflow" class="ug-link">&#128260; Post-Load Workflow</a>
+          <a href="#ug-export" class="ug-link">&#128228; Export &amp; Share</a>
+          <div style="padding:3px 14px 5px;font-size:0.66rem;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1.2px;text-transform:uppercase;margin-top:8px;">Interpreting Results</div>
+          <a href="#ug-dsm" class="ug-link">&#128216; DSM Basics</a>
+          <a href="#ug-kpi" class="ug-link">&#128202; KPI Cards</a>
+          <a href="#ug-ui" class="ug-link">&#128308; Under Injection</a>
+          <a href="#ug-oi" class="ug-link">&#128994; Over Injection</a>
+          <a href="#ug-matdev" class="ug-link">&#9888;&#65039; Material Deviations</a>
+          <a href="#ug-annex" class="ug-link">&#128203; Full Annexure</a>
+          <a href="#ug-freq" class="ug-link">&#128257; Frequency Benefit</a>
+          <div style="padding:3px 14px 5px;font-size:0.66rem;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1.2px;text-transform:uppercase;margin-top:8px;">Reference</div>
+          <a href="#ug-slabs" class="ug-link">&#128208; DSM Slab Table</a>
+          <a href="#ug-glossary" class="ug-link">&#128218; Glossary</a>
+        </nav>
+        <div id="ug-scroll-area" style="flex:1;padding:24px 32px 60px 32px;overflow-y:auto;max-height:90vh;background:#f8fafc;">
+          <div id="ug-start" style="margin-bottom:32px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:12px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#9889;</div><div><b style="font-size:0.97rem;color:#1e293b;">Quick Start</b><div style="font-size:0.75rem;color:#64748b;">Two input methods &rarr; one unified results view</div></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div style="background:white;border:2px solid #4f46e5;border-radius:7px;padding:11px;"><div style="font-size:0.71rem;font-weight:700;text-transform:uppercase;color:#4f46e5;margin-bottom:3px;">Option A &mdash; Manual Entry</div><p style="font-size:0.81rem;color:#1e293b;margin:0;">One time-block at a time.</p></div><div style="background:white;border:2px solid #10b981;border-radius:7px;padding:11px;"><div style="font-size:0.71rem;font-weight:700;text-transform:uppercase;color:#10b981;margin-bottom:3px;">Option B &mdash; Excel Upload</div><p style="font-size:0.81rem;color:#1e293b;margin:0;">Full week in one shot. Recommended.</p></div></div>
+            <div style="background:#eff6ff;border-left:4px solid #4f46e5;padding:7px 12px;font-size:0.81rem;margin-top:8px;border-radius:0 5px 5px 0;">&#9432; KPI cards show amounts in <b>Lakhs (&#8377;X.XX L)</b>. Detail tables show full Indian comma format.</div>
+          </div>
+          <div id="ug-manual" style="margin-bottom:32px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:11px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#9999;</div><b style="font-size:0.97rem;color:#1e293b;">Manual Entry</b></div>
+            <p style="font-size:0.81rem;color:#1e293b;line-height:1.7;">Enter Company Name, Week, Date, Time Slot, Scheduled MWh, Actual MWh, PPA Rate and Frequency Hz. Click <b>&#9881; Process Entry</b>. Dashboard switches to Executive Summary automatically.</p>
+          </div>
+          <div id="ug-excel" style="margin-bottom:32px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:11px;"><div style="width:32px;height:32px;background:#10b981;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128194;</div><b style="font-size:0.97rem;color:#1e293b;">Excel Upload</b></div>
+            <p style="font-size:0.81rem;color:#1e293b;line-height:1.7;">Upload .xlsx/.xls, select sheet, pick header row, map 6 columns (Date / Time / Scheduled MWh / Actual MWh / Frequency Hz / Rate &#8377;/MWh), then click <b>&#9881; Generate Audit Report</b>.</p>
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:7px 11px;font-size:0.80rem;"><b>&#128308; Tip:</b> Blank results? Check Sch MWh mapping. No freq column? Defaults to 50.00 Hz.</div>
+          </div>
+          <div id="ug-workflow" style="margin-bottom:32px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:11px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128260;</div><b style="font-size:0.97rem;color:#1e293b;">Post-Load Workflow</b></div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;gap:9px;"><div style="width:21px;height:21px;background:#4f46e5;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.73rem;flex-shrink:0;margin-top:2px;">1</div><div style="background:white;border:1px solid #e2e8f0;border-radius:6px;padding:6px 11px;flex:1;font-size:0.80rem;"><b>Executive Summary</b> &rarr; 6 KPI cards in Lakhs, charts.</div></div>
+              <div style="display:flex;gap:9px;"><div style="width:21px;height:21px;background:#4f46e5;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.73rem;flex-shrink:0;margin-top:2px;">2</div><div style="background:white;border:1px solid #e2e8f0;border-radius:6px;padding:6px 11px;flex:1;font-size:0.80rem;"><b>Detailed Reports</b> &rarr; UI, OI, Material Dev, Annexure, Impact tabs.</div></div>
+              <div style="display:flex;gap:9px;"><div style="width:21px;height:21px;background:#4f46e5;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.73rem;flex-shrink:0;margin-top:2px;">3</div><div style="background:white;border:1px solid #e2e8f0;border-radius:6px;padding:6px 11px;flex:1;font-size:0.80rem;"><b>Impact of OI</b> &rarr; Enter Wtd Avg Rate. <span style="color:#ef4444;font-weight:600;">Red=Loss</span>, <span style="color:#16a34a;font-weight:600;">Green=Profit</span>.</div></div>
+              <div style="display:flex;gap:9px;"><div style="width:21px;height:21px;background:#0369a1;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.73rem;flex-shrink:0;margin-top:2px;">4</div><div style="background:white;border:1px solid #e2e8f0;border-radius:6px;padding:6px 11px;flex:1;font-size:0.80rem;"><b>Freq Benefit</b> &rarr; OI Bonus + Missed Opportunity.</div></div>
+              <div style="display:flex;gap:9px;"><div style="width:21px;height:21px;background:#10b981;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.73rem;flex-shrink:0;margin-top:2px;">5</div><div style="background:white;border:1px solid #e2e8f0;border-radius:6px;padding:6px 11px;flex:1;font-size:0.80rem;"><b>Save &amp; Share</b> &rarr; Click &#128190; Save &amp; Share. Recipient opens file &rarr; all data visible instantly.</div></div>
+            </div>
+          </div>
+          <div id="ug-export" style="margin-bottom:32px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:11px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128228;</div><b style="font-size:0.97rem;color:#1e293b;">Export &amp; Share</b></div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.80rem;border:1px solid #e2e8f0;border-radius:7px;overflow:hidden;"><tr style="background:#4f46e5;color:white;"><th style="padding:7px 10px;text-align:left;">Button</th><th style="padding:7px 10px;text-align:left;">Output</th><th style="padding:7px 10px;text-align:left;">Use For</th></tr>
+            <tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">&#128438; Print Dashboard</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">Browser print dialog</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">Hard copy / PDF via print</td></tr>
+            <tr style="background:#f8fafc;"><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">&#128190; Save &amp; Share</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">Standalone .html with all data</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;"><b>Email to anyone — opens exactly as-is</b></td></tr>
+            <tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">&#128202; Export Excel</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">Tab data as .xlsx</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;">SLDC/RLDC submission</td></tr>
+            <tr style="background:#f8fafc;"><td style="padding:6px 10px;font-weight:600;">&#128196; Export PDF</td><td style="padding:6px 10px;">Current tab as PDF</td><td style="padding:6px 10px;">Formal audit records</td></tr></table>
+            <div style="background:#eff6ff;border-left:4px solid #4f46e5;padding:7px 12px;font-size:0.81rem;margin-top:9px;border-radius:0 5px 5px 0;">&#9432; <b>Save &amp; Share</b> embeds all data into the HTML. Recipient just opens the file in any browser — no Excel, no tools needed. Input tabs are hidden in shared view.</div>
+          </div>
+          <div style="border-top:2px dashed #e2e8f0;margin:4px 0 26px;text-align:center;"><span style="background:#f8fafc;padding:0 12px;color:#94a3b8;font-size:0.74rem;font-weight:600;">&mdash; Interpretation Guide &mdash;</span></div>
+          <div id="ug-dsm" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:10px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128216;</div><b style="font-size:0.97rem;color:#1e293b;">DSM Basics</b></div>
+            <div style="background:#1e293b;color:#93c5fd;border-radius:7px;padding:9px 14px;font-family:monospace;font-size:0.78rem;margin-bottom:9px;line-height:1.8;">UI = Actual &lt; Scheduled &rarr; DSM Charge always payable<br/>OI &lt;50.05Hz = DSM Receivable &nbsp;|&nbsp; OI &ge;50.05Hz = DSM Charge payable<br/>Penalty/Saving = Actual DSM &minus; Value@Ref (Positive=Penalty, Negative=Saving)</div>
+          </div>
+          <div id="ug-kpi" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:10px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128202;</div><b style="font-size:0.97rem;color:#1e293b;">KPI Cards</b></div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.79rem;border:1px solid #e2e8f0;border-radius:7px;overflow:hidden;"><tr style="background:#4f46e5;color:white;"><th style="padding:6px 10px;text-align:left;">Card</th><th style="padding:6px 10px;text-align:left;">Interpretation</th></tr><tr><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">UI DSM Payable</td><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;">Total DSM charge for all UI blocks.</td></tr><tr style="background:#f8fafc;"><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">OI DSM</td><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;">Green=net receivable. Red=net OI charge (&ge;50.05Hz).</td></tr><tr><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">Total Penalty/Saving</td><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;"><span style="color:#dc2626;font-weight:600;">Red=Penalty</span>. <span style="color:#16a34a;font-weight:600;">Green=Saving</span> (high freq discount).</td></tr><tr style="background:#f8fafc;"><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">Revenue Loss</td><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;">OI benefit foregone at high frequency.</td></tr><tr><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;">Net DSM Payable</td><td style="padding:5px 10px;border-bottom:1px solid #e2e8f0;">UI Charge + OI Charge &minus; OI Benefit. &#8627; sub-lines show breakdown.</td></tr><tr style="background:#f8fafc;"><td style="padding:5px 10px;font-weight:600;">Deviation Slots</td><td style="padding:5px 10px;">UI+OI slot count.</td></tr></table>
+          </div>
+          <div id="ug-ui" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#ef4444;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128308;</div><b style="font-size:0.97rem;color:#1e293b;">Under Injection</b></div>
+            <p style="font-size:0.81rem;color:#1e293b;line-height:1.7;"><span style="color:#dc2626;font-weight:600;">Red=Penalty</span> (low freq, high multiplier). <span style="color:#16a34a;font-weight:600;">Green=Saving</span> (high freq, multiplier &lt;1). Click <b>View</b> for slot drill-down.</p>
+          </div>
+          <div id="ug-oi" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#10b981;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128994;</div><b style="font-size:0.97rem;color:#1e293b;">Over Injection / Impact of OI</b></div>
+            <p style="font-size:0.81rem;color:#1e293b;line-height:1.7;">OI &lt;50.05 Hz = receivable. OI &ge;50.05 Hz = payable charge. Enter Wtd Avg Market Rate in Impact tab. <span style="color:#ef4444;font-weight:600;">Red=Loss</span> (Wtd Avg &gt; Net DSM). <span style="color:#16a34a;font-weight:600;">Green=Profit</span> (Wtd Avg &lt; Net DSM). Total row shows Net Loss/Profit badge.</p>
+          </div>
+          <div id="ug-matdev" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#f59e0b;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#9888;</div><b style="font-size:0.97rem;color:#1e293b;">Material Deviations</b></div>
+            <p style="font-size:0.81rem;color:#1e293b;line-height:1.7;">Blocks where Penalty/Loss &gt; threshold (default &#8377;5,000). Type <b>Audit Remarks</b> — saved in the snapshot when you Share.</p>
+          </div>
+          <div id="ug-annex" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128203;</div><b style="font-size:0.97rem;color:#1e293b;">Full Annexure</b></div>
+            <p style="font-size:0.81rem;color:#1e293b;line-height:1.7;">Complete slot-level ledger. Export Excel for SLDC/RLDC submission.</p>
+          </div>
+          <div id="ug-freq" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#0369a1;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128257;</div><b style="font-size:0.97rem;color:#1e293b;">Frequency Benefit Tab</b></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;"><div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #10b981;border-radius:6px;padding:9px;"><b style="font-size:0.76rem;color:#10b981;text-transform:uppercase;">OI Bonus</b><p style="font-size:0.79rem;margin:4px 0 0;">Premium earned during 49.90&ndash;49.97 Hz band.</p></div><div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #ef4444;border-radius:6px;padding:9px;"><b style="font-size:0.76rem;color:#ef4444;text-transform:uppercase;">Missed Opportunity</b><p style="font-size:0.79rem;margin:4px 0 0;">UI during same band = charge + premium foregone (dual loss).</p></div></div>
+          </div>
+          <div id="ug-slabs" style="margin-bottom:30px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128208;</div><b style="font-size:0.97rem;color:#1e293b;">CERC DSM Slab Reference</b></div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.79rem;border:1px solid #e2e8f0;border-radius:7px;overflow:hidden;"><tr style="background:#4f46e5;color:white;"><th style="padding:6px 9px;">Slab</th><th style="padding:6px 9px;">Band</th><th style="padding:6px 9px;">UI Mult.</th><th style="padding:6px 9px;">OI Freq&lt;50.05</th><th style="padding:6px 9px;">OI Freq&ge;50.05</th></tr><tr><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;font-weight:600;">Q1</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">0&ndash;10%</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">1.0&times;&ndash;1.5&times;</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">1.0&times;&ndash;1.15&times;</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">Payable</td></tr><tr style="background:#f8fafc;"><td style="padding:5px 9px;font-weight:600;">Q2</td><td style="padding:5px 9px;">&gt;10%</td><td style="padding:5px 9px;">1.0&times;&ndash;2.0&times;</td><td style="padding:5px 9px;">Zero benefit</td><td style="padding:5px 9px;">Payable</td></tr></table>
+          </div>
+          <div id="ug-glossary" style="margin-bottom:20px;scroll-margin-top:16px;">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:9px;"><div style="width:32px;height:32px;background:#4f46e5;border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;">&#128218;</div><b style="font-size:0.97rem;color:#1e293b;">Glossary</b></div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.79rem;border:1px solid #e2e8f0;border-radius:7px;overflow:hidden;"><tr style="background:#4f46e5;color:white;"><th style="padding:6px 9px;text-align:left;">Term</th><th style="padding:6px 9px;text-align:left;">Meaning</th></tr><tr><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;font-weight:600;">DSM</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">Deviation Settlement Mechanism &mdash; CERC framework</td></tr><tr style="background:#f8fafc;"><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;font-weight:600;">UI / OI</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">Under Injection / Over Injection vs RLDC schedule</td></tr><tr><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;font-weight:600;">Q1 / Q2</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">Q1 = within 10% deviation; Q2 = beyond 10%</td></tr><tr style="background:#f8fafc;"><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;font-weight:600;">Time Block</td><td style="padding:5px 9px;border-bottom:1px solid #e2e8f0;">15-min interval — Block 1=00:00, Block 96=23:45</td></tr><tr><td style="padding:5px 9px;font-weight:600;">CERC</td><td style="padding:5px 9px;">Central Electricity Regulatory Commission</td></tr></table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  <div class="app-footer no-print" id="app-footer-bar">
+    <span class="ft-label">&#128295; Tools</span>
+    &nbsp;&mdash;&nbsp;
+    <span class="ft-tool">DSM General Seller Tool</span>
+    &nbsp;&mdash;&nbsp;
+    <span class="ft-label">Developed by</span>
+    <span class="ft-dev">&nbsp;Pradeep</span>
+  </div>
+</div><!-- end container -->
+
+<script>
+    let raw=[], headers=[], rows=[], comments={}, wb=null, jsonSheet=[];
+    let charts = {};
+    let companyName = "", weekNumber = "";
+
+    const fmtM        = n => '₹' + (Math.abs(n)/100000).toFixed(2) + ' L';
+    const fmtRupees   = n => '₹' + (Math.abs(n)/100000).toFixed(2) + ' L';
+    const fmtRupeesAxis = n => {
+        const abs = Math.abs(n);
+        if(abs >= 10000000) return '₹' + (abs/10000000).toFixed(1) + 'Cr';
+        if(abs >= 100000)   return '₹' + (abs/100000).toFixed(1) + 'L';
+        if(abs >= 1000)     return '₹' + (abs/1000).toFixed(0) + 'K';
+        return '₹' + Math.round(abs).toLocaleString('en-IN');
+    };
+    const fmtVol  = n => Math.round(n);
+    const fmtIN   = n => Math.round(n).toLocaleString('en-IN');
+    const fmtLakh = n => (Math.abs(n)/100000).toFixed(2) + ' L';
+    const fmtRate = n => isFinite(n) ? n.toFixed(2) : '-';
+    const rateDisp = v => v === 0 ? '<span style="color:#94a3b8;">Enter rate</span>' : '₹' + v.toFixed(2);
+    const impColor = v => v < 0 ? 'color:#ef4444;font-weight:700;' : v > 0 ? 'color:#10b981;font-weight:700;' : '';
+
+    window.onload = () => {
+        const sel = document.getElementById('m-time');
+        for(let h=0; h<24; h++) {
+            for(let m of [0,15,30,45]) {
+                let t = h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
+                let opt = document.createElement('option'); opt.value = t; opt.innerText = t; sel.appendChild(opt);
+            }
+        }
+        document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('file-input').addEventListener('change', loadFile);
+    };
+
+    function switchTab(id) {
+        document.querySelectorAll('.tab-content').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).style.display = 'block';
+        const btns = document.querySelectorAll('.tab-button');
+        if(id === 'manual')      btns[0].classList.add('active');
+        if(id === 'excel')       btns[1].classList.add('active');
+        if(id === 'exec')        btns[2].classList.add('active');
+        if(id === 'results')     btns[3].classList.add('active');
+        if(id === 'freqbenefit') btns[4].classList.add('active');
+        if(id === 'userguide')    btns[5].classList.add('active');
+        if(id === 'rca')          btns[6].classList.add('active');
+        if(id === 'rca') { try{ fillRCATab(); }catch(e){console.error('RCA:',e);} }
+        if(id === 'exec' && rows.length > 0) renderCharts();
+        if(id === 'freqbenefit' && rows.length > 0) fillFreqBenefit();
+    }
+
+    function subTab(view) {
+        ['v-under','v-over','v-oiimpact','v-uiimpact','v-mat','v-annex'].forEach(id => document.getElementById(id).style.display = 'none');
+        document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('v-' + view).style.display = 'block';
+        if(view === 'under')    document.getElementById('btn-u').classList.add('active');
+        if(view === 'over')     document.getElementById('btn-o').classList.add('active');
+        if(view === 'oiimpact') { document.getElementById('btn-oi').classList.add('active');  calcOIImpact(); }
+        if(view === 'uiimpact') { document.getElementById('btn-ui2').classList.add('active'); calcUIImpact(); }
+        if(view === 'mat')      document.getElementById('btn-m').classList.add('active');
+        if(view === 'annex')    document.getElementById('btn-a').classList.add('active');
+    }
+
+    function hideDrill(type) { document.getElementById('drill-' + type).style.display = 'none'; }
+
+    function interpolate(f, sF, eF, sR, eR) {
+        if(f <= sF) return sR; if(f >= eF) return eR;
+        return sR + (eR - sR) * ((f - sF) / (eF - sF));
+    }
+
+    function getMult(f, dir, slab) {
+        if(slab === 1) {
+            if(dir === 'UI') {
+                if(f > 50.05)       return 0.85;
+                else if(f > 50.03)  return interpolate(f, 50.03, 50.05, 1.0, 0.85);
+                else if(f >= 49.97) return 1.0;
+                else if(f >= 49.90) return interpolate(f, 49.90, 49.97, 1.5, 1.0);
+                else                return 1.5;
+            } else {
+                if(f >= 50.10)      return -0.1;
+                else if(f > 50.05)  return 0.0;
+                else if(f > 50.03)  return interpolate(f, 50.03, 50.05, 1.0, 0.5);
+                else if(f >= 49.97) return 1.0;
+                else if(f >= 49.90) return interpolate(f, 49.90, 49.97, 1.15, 1.0);
+                else                return 1.15;
+            }
+        } else {
+            if(dir === 'UI') {
+                if(f >= 50.00) return 1.0;
+                else if(f >= 49.90) return 1.5;
+                else return 2.0;
+            } else {
+                if(f < 50.10) return 0.0;
+                else return -0.1;
+            }
+        }
+    }
+
+    function calcRow(d, t, s, a, r, f) {
+        const dev = a - s, abs = Math.abs(dev), lim = Math.min(s * 0.10, 25);
+        let q1 = Math.min(abs, lim), q2 = Math.max(0, abs - lim);
+        const isU = dev < 0, dir = isU ? 'UI' : 'OI';
+        const base   = q => q * 10 * r;
+        const act1   = base(q1) * getMult(f, dir, 1);
+        const act2   = base(q2) * getMult(f, dir, 2);
+        const totAct = act1 + act2;
+        const ref1   = base(q1) * 1.0, ref2 = base(q2) * 1.0;
+        let d1 = 0, d2 = 0;
+        if(isU) { d1 = act1 - ref1; d2 = act2 - ref2; }
+        else    { d1 = ref1 - act1; d2 = ref2 - act2; }
+        let zeroLoss = 0;
+        if(!isU && totAct <= 0.01) zeroLoss = ref1 + ref2;
+        return {
+            id: `${d}_${t}_${Math.random()}`, date: d, time: t, sch: s, act: a, rate: r, freq: f,
+            dev, abs, isU, pct: s > 0 ? (dev / s) * 100 : 0,
+            q1, q2, act1, act2, totAct, ref1, ref2, d1, d2, zeroLoss
+        };
+    }
+
+    function calculateManual() {
+        const d = document.getElementById('m-date').value;
+        const t = document.getElementById('m-time').value;
+        const s = parseFloat(document.getElementById('m-sch').value)  || 0;
+        const a = parseFloat(document.getElementById('m-act').value)  || 0;
+        const r = parseFloat(document.getElementById('m-rate').value) || 0;
+        const f = parseFloat(document.getElementById('m-freq').value) || 50;
+        companyName = document.getElementById('m-company').value || "Company";
+        weekNumber  = document.getElementById('m-week').value   || "-";
+        if(!d) return alert("Date required");
+        rows = [calcRow(d, t, s, a, r, f)]; render();
+    }
+
+    function loadFile(e) {
+        const f = e.target.files[0]; if(!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+            const d = document.getElementById('sheet-list'); d.innerHTML = '';
+            wb.SheetNames.forEach(n => {
+                const b = document.createElement('button');
+                b.className = 'btn btn-outline'; b.innerText = n;
+                b.onclick = () => loadSheet(n); d.appendChild(b);
+            });
+            document.getElementById('u-stage').style.display = 'none';
+            document.getElementById('s-stage').style.display = 'block';
+            updateStep(2);
+        };
+        reader.readAsArrayBuffer(f);
+    }
+
+    function loadSheet(n) {
+        const ws = wb.Sheets[n];
+        jsonSheet = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const sel = document.getElementById('head-row'); sel.innerHTML = '';
+        for(let i = 0; i < Math.min(10, jsonSheet.length); i++) {
+            let opt = document.createElement('option'); opt.value = i;
+            opt.innerText = `Row ${i+1}: ${jsonSheet[i].slice(0,3).join(', ')}`;
+            if(i === 1) opt.selected = true; sel.appendChild(opt);
+        }
+        mapHeaders();
+        document.getElementById('s-stage').style.display = 'none';
+        document.getElementById('m-stage').style.display = 'block';
+        updateStep(3);
+    }
+
+    function remapHeaders() { mapHeaders(); }
+
+    function mapHeaders() {
+        const idx = parseInt(document.getElementById('head-row').value);
+        headers = jsonSheet[idx] || []; raw = jsonSheet.slice(idx + 1);
+        ['c-date','c-time','c-sch','c-act','c-freq','c-rate'].forEach(id => {
+            const s = document.getElementById(id); s.innerHTML = '';
+            headers.forEach((h, i) => {
+                let opt = document.createElement('option'); opt.value = i; opt.innerText = h || `Col ${i+1}`; s.appendChild(opt);
+            });
+        });
+        const set = (k, id) => {
+            let i = headers.findIndex(h => h && k.some(x => String(h).toLowerCase().includes(x)));
+            if(i > -1) document.getElementById(id).value = i;
+        };
+        set(['date'], 'c-date'); set(['time','slot'], 'c-time'); set(['sch','sched'], 'c-sch');
+        set(['act'], 'c-act'); set(['freq','hz'], 'c-freq'); set(['rate','ppa'], 'c-rate');
+    }
+
+    function parseTime(timeVal) {
+        if(typeof timeVal === 'number') {
+            let hours = Math.floor(timeVal * 24), mins = Math.floor((timeVal * 24 * 60) % 60);
+            mins = Math.floor(mins / 15) * 15;
+            return hours.toString().padStart(2,'0') + ':' + mins.toString().padStart(2,'0');
+        } else if(typeof timeVal === 'string') {
+            let parts = timeVal.split(':');
+            if(parts.length >= 2) {
+                let h = parseInt(parts[0]) || 0, m = parseInt(parts[1]) || 0;
+                m = Math.floor(m / 15) * 15;
+                return h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
+            }
+        }
+        return '00:00';
+    }
+
+    function processBatch() {
+        const c = {
+            d: document.getElementById('c-date').value, t: document.getElementById('c-time').value,
+            s: document.getElementById('c-sch').value,  a: document.getElementById('c-act').value,
+            f: document.getElementById('c-freq').value, r: document.getElementById('c-rate').value
+        };
+        companyName = document.getElementById('e-company').value || "Company";
+        weekNumber  = document.getElementById('e-week').value   || "-";
+        comments = {};
+        rows = raw.map(r => {
+            let d = r[c.d];
+            if(typeof d === 'number' && d > 30000) d = new Date(Math.round((d - 25569) * 864e5)).toISOString().split('T')[0];
+            let timeVal = parseTime(r[c.t]);
+            return calcRow(d, timeVal, parseFloat(r[c.s])||0, parseFloat(r[c.a])||0, parseFloat(r[c.r])||0, parseFloat(r[c.f])||50);
+        }).filter(r => r.sch > 0);
+        render();
+    }
+
+    function render() {
+        document.getElementById('no-res-exec').style.display = 'none';
+        document.getElementById('exec-dash').style.display   = 'block';
+        document.getElementById('res-dash').style.display    = 'block';
+        document.getElementById('fb-no-data').style.display  = 'none';
+        document.getElementById('fb-dash').style.display     = 'block';
+        switchTab('exec');
+        document.getElementById('exec-company').innerText = companyName || "DSM General Seller Dashboard";
+        document.getElementById('exec-week').innerText    = weekNumber  || "-";
+        const uVol     = rows.filter(r =>  r.isU).reduce((s,r) => s + r.abs, 0);
+        const oVol     = rows.filter(r => !r.isU).reduce((s,r) => s + r.abs, 0);
+        const uSlots   = rows.filter(r =>  r.isU && Math.abs(r.d1 + r.d2) > 0).length;
+        const oSlots   = rows.filter(r => !r.isU && Math.abs(r.d1 + r.d2) > 0).length;
+        const totalSch = rows.reduce((sum,r) => sum + r.sch, 0);
+        const totalAct = rows.reduce((sum,r) => sum + r.act, 0);
+        const uPay      = rows.filter(r =>  r.isU).reduce((s,r) => s + r.totAct, 0);
+        const oiBenefit = rows.filter(r => !r.isU && r.totAct >  0).reduce((s,r) => s + r.totAct, 0);
+        const oiCharge  = rows.filter(r => !r.isU && r.totAct <= 0).reduce((s,r) => s + Math.abs(r.totAct), 0);
+        const oRec      = oiBenefit - oiCharge;
+        const netPayable = uPay + oiCharge - oiBenefit;
+        const uPen  = rows.filter(r =>  r.isU).reduce((s,r) => s + (r.d1 + r.d2), 0);
+        const oLoss = rows.filter(r => !r.isU).reduce((s,r) => s + (r.d1 + r.d2), 0);
+        document.getElementById('k-u-pay').innerText = `-${fmtM(uPay)}`;
+        document.getElementById('k-u-vol').innerText = `${fmtVol(uVol)} MWh`;
+        const oiTitle = document.getElementById('k-oi-title');
+        if (oRec >= 0) {
+            document.getElementById('k-o-rec').innerText   = `+${fmtM(oRec)}`;
+            document.getElementById('k-o-rec').style.color = '#10b981';
+            if (oiTitle) { oiTitle.textContent = 'Over Injection DSM'; oiTitle.style.color = ''; }
+        } else {
+            document.getElementById('k-o-rec').innerText   = `-${fmtM(Math.abs(oRec))}`;
+            document.getElementById('k-o-rec').style.color = '#ef4444';
+            if (oiTitle) { oiTitle.textContent = 'OI DSM Charge (Net)'; oiTitle.style.color = '#ef4444'; }
+        }
+        document.getElementById('k-o-vol').innerText = `${fmtVol(oVol)} MWh`;
+        const penTitle = document.getElementById('k-pen-title');
+        const penSub   = document.getElementById('k-pen-sub');
+        if (uPen >= 0) {
+            document.getElementById('k-pen').innerText   = fmtRupees(uPen);
+            document.getElementById('k-pen').style.color = '#ef4444';
+            if (penTitle) { penTitle.textContent = 'Total Penalty';  penTitle.style.color = 'var(--danger)'; }
+            if (penSub)   penSub.textContent = 'DSM Cost > PPA Rate';
+        } else {
+            document.getElementById('k-pen').innerText   = fmtRupees(Math.abs(uPen));
+            document.getElementById('k-pen').style.color = '#16a34a';
+            if (penTitle) { penTitle.textContent = 'Total Saving';   penTitle.style.color = '#16a34a'; }
+            if (penSub)   penSub.textContent = 'DSM Cost < PPA Rate (High Freq Benefit)';
+        }
+        document.getElementById('k-loss').innerText = fmtRupees(oLoss);
+        const netTitle = document.getElementById('k-net-title');
+        const netSub   = document.getElementById('k-net-sub');
+        if (netPayable >= 0) {
+            document.getElementById('k-net').innerText   = fmtM(netPayable);
+            document.getElementById('k-net').style.color = '#ef4444';
+            if (netTitle) netTitle.textContent = 'Net DSM Payable';
+            if (netSub)   netSub.textContent   = 'UI Charge − OI Benefit';
+        } else {
+            document.getElementById('k-net').innerText   = fmtM(Math.abs(netPayable));
+            document.getElementById('k-net').style.color = '#10b981';
+            if (netTitle) netTitle.textContent = 'Net DSM Receivable';
+            if (netSub)   netSub.textContent   = 'OI Benefit > UI Charge';
+        }
+        document.getElementById('k-net-ui').innerText = `↳ UI Payable: ₹${fmtLakh(uPay)}`;
+        document.getElementById('k-net-oi').innerText = oRec >= 0
+            ? `↳ OI Receivable: ₹${fmtLakh(oRec)}`
+            : `↳ OI Charge: ₹${fmtLakh(Math.abs(oRec))}`;
+        document.getElementById('k-slots').innerText     = uSlots + oSlots;
+        document.getElementById('k-slots-sub').innerText = `${uSlots} Under | ${oSlots} Over`;
+        document.getElementById('k-slots-sch').innerText = `Sch: ${Math.round(totalSch).toLocaleString('en-IN')} MWh`;
+        document.getElementById('k-slots-act').innerText = `Act: ${Math.round(totalAct).toLocaleString('en-IN')} MWh`;
+
+        /* FIX: wrap renderCharts in try-catch so shared-view (images replace canvases) doesn't break rest of render */
+        try { renderCharts(); } catch(e) { console.warn('Chart rendering skipped (shared view):', e.message); }
+
+        fillTop10();
+        fillSlab('tb-under', true,  'u');
+        fillSlab('tb-over',  false, 'o');
+        fillMat();
+        fillLedger();
+
+        /* FIX: also recalculate Impact tables during render if rates already entered */
+        try { calcOIImpact(); } catch(e) {}
+        try { calcUIImpact(); } catch(e) {}
+        try { fillFreqBenefit(); } catch(e) {}
+        try { if(typeof fillRCATab==='function') fillRCATab(); } catch(e) {}
+    }
+
+    function fillSlab(id, isU, pfx) {
+        const sub = rows.filter(r => r.isU === isU);
+        const s1 = {
+            e: sub.reduce((s,r) => s + r.q1,   0),
+            b: sub.reduce((s,r) => s + r.ref1, 0),
+            a: sub.reduce((s,r) => s + r.act1, 0),
+            p: sub.reduce((s,r) => s + r.d1,   0)
+        };
+        const s2 = {
+            e: sub.reduce((s,r) => s + r.q2,   0),
+            b: sub.reduce((s,r) => s + r.ref2, 0),
+            a: sub.reduce((s,r) => s + r.act2, 0),
+            p: sub.reduce((s,r) => s + r.d2,   0)
+        };
+        const tot = { e: s1.e + s2.e, b: s1.b + s2.b, a: s1.a + s2.a, p: s1.p + s2.p };
+
+        const rHTML = (l, d, c, isTot) => {
+            const cls = isTot ? ' class="total-row"' : '';
+            const drillCell = isTot
+                ? `<td class="text-center" style="color:#94a3b8;font-style:italic;">&#8211;</td>`
+                : `<td class="text-center"><button class="btn-sm" onclick="drill('${isU ? 'u' : 'o'}','${c}')">View</button></td>`;
+            return `<tr${cls}>
+                <td>${l}</td>
+                <td class="text-right">${d.e.toFixed(2)}</td>
+                <td class="text-right">&#8377;${fmtIN(d.b)}</td>
+                <td class="text-right">&#8377;${fmtIN(Math.abs(d.a))}</td>
+                <td class="text-right" style="color:${d.p>0?'#dc2626':d.p<0?'#16a34a':'#94a3b8'};font-weight:600;">${d.p>0?'&#8377;'+fmtIN(d.p):d.p<0?'&#8722;&#8377;'+fmtIN(Math.abs(d.p)):'&#8211;'}</td>
+                ${drillCell}
+            </tr>`;
+        };
+        document.getElementById(id).innerHTML =
+            rHTML('Up to 10%',     s1,  's1', false) +
+            rHTML('More than 10%', s2,  's2', false) +
+            rHTML('Total',         tot, '',   true);
+    }
+
+    function calcOIImpact() {
+        const impColorOI = v => v > 0 ? 'color:#ef4444;font-weight:700;'
+                               : v < 0 ? 'color:#16a34a;font-weight:700;'
+                               : '';
+        const wtdRate = parseFloat(document.getElementById('oi-wtd-rate').value) || 0;
+        const oiRows  = rows.filter(r => !r.isU);
+        if(!rows.length || !oiRows.length) {
+            document.getElementById('oi-no-data').style.display    = 'block';
+            document.getElementById('oi-table-wrap').style.display = 'none'; return;
+        }
+        document.getElementById('oi-no-data').style.display    = 'none';
+        document.getElementById('oi-table-wrap').style.display = 'block';
+        const s1U = oiRows.reduce((s,r) => s + r.q1,   0);
+        const s1R = oiRows.reduce((s,r) => s + r.act1, 0);
+        const s1N = s1U > 0 ? s1R / s1U : 0;
+        const s2U = oiRows.reduce((s,r) => s + r.q2,   0);
+        const s2R = oiRows.reduce((s,r) => s + r.act2, 0);
+        const s2N = s2U > 0 ? s2R / s2U : 0;
+        const tU  = s1U + s2U, tR = s1R + s2R, tN = tU > 0 ? tR / tU : 0;
+        const s1Diff = wtdRate - s1N, s1Imp = s1Diff * s1U;
+        const s2Diff = wtdRate - s2N, s2Imp = s2Diff * s2U;
+        const tImp   = s1Imp + s2Imp;
+        const tDiff  = tU > 0 ? tImp / tU : 0;
+        const mkRow = (lbl, u, recv, netDSM, diff, imp, bold) => {
+            const bgStyle = bold
+                ? (tImp > 0 ? 'font-weight:700;background:#fff1f2;'
+                   : tImp < 0 ? 'font-weight:700;background:#f0fdf4;'
+                   : 'font-weight:700;background:#f1f5f9;')
+                : '';
+            const label = bold
+                ? (tImp > 0 ? 'Total &nbsp;<span style="font-size:0.75rem;background:#fecaca;color:#991b1b;padding:1px 5px;border-radius:3px;">Net Loss</span>'
+                   : tImp < 0 ? 'Total &nbsp;<span style="font-size:0.75rem;background:#bbf7d0;color:#166534;padding:1px 5px;border-radius:3px;">Net Profit</span>'
+                   : 'Total')
+                : lbl;
+            return `<tr style="${bgStyle}">
+                <td>${label}</td>
+                <td class="text-right">${fmtIN(u)}</td>
+                <td class="text-right">&#8377;${fmtIN(recv)}</td>
+                <td class="text-right">&#8377;${fmtRate(netDSM)}</td>
+                <td class="text-right">${rateDisp(wtdRate)}</td>
+                <td class="text-right" style="${impColorOI(diff)}">&#8377;${fmtRate(diff)}</td>
+                <td class="text-right" style="${impColorOI(imp)}">&#8377;${fmtIN(imp)}</td>
+            </tr>`;
+        };
+        document.getElementById('tb-oi-impact').innerHTML =
+            mkRow('Up to 10%',     s1U, s1R, s1N, s1Diff, s1Imp, false) +
+            mkRow('More than 10%', s2U, s2R, s2N, s2Diff, s2Imp, false) +
+            mkRow('',              tU,  tR,  tN,  tDiff,  tImp,  true);
+    }
+
+    function calcUIImpact() {
+        const wtdRate = parseFloat(document.getElementById('ui-wtd-rate').value) || 0;
+        const uiRows  = rows.filter(r => r.isU);
+        if(!rows.length || !uiRows.length) {
+            document.getElementById('ui-no-data').style.display    = 'block';
+            document.getElementById('ui-table-wrap').style.display = 'none'; return;
+        }
+        document.getElementById('ui-no-data').style.display    = 'none';
+        document.getElementById('ui-table-wrap').style.display = 'block';
+        const s1U = uiRows.reduce((s,r) => s + r.q1,   0);
+        const s1P = uiRows.reduce((s,r) => s + r.act1, 0);
+        const s1N = s1U > 0 ? s1P / s1U : 0;
+        const s2U = uiRows.reduce((s,r) => s + r.q2,   0);
+        const s2P = uiRows.reduce((s,r) => s + r.act2, 0);
+        const s2N = s2U > 0 ? s2P / s2U : 0;
+        const tU = s1U + s2U, tP = s1P + s2P, tN = tU > 0 ? tP / tU : 0;
+        const mkRow = (lbl, u, pay, net, bold) => {
+            const diff = wtdRate - net, imp = diff * u;
+            const bg = bold ? 'font-weight:700;background:#fff1f2;' : '';
+            return `<tr style="${bg}">
+                <td>${lbl}</td>
+                <td class="text-right">${fmtIN(u)}</td>
+                <td class="text-right">&#8377;${fmtIN(pay)}</td>
+                <td class="text-right">&#8377;${fmtRate(net)}</td>
+                <td class="text-right">${rateDisp(wtdRate)}</td>
+                <td class="text-right" style="${impColor(diff)}">&#8377;${fmtRate(diff)}</td>
+                <td class="text-right" style="${impColor(imp)}">&#8377;${fmtIN(imp)}</td>
+            </tr>`;
+        };
+        document.getElementById('tb-ui-impact').innerHTML =
+            mkRow('Up to 10%',     s1U, s1P, s1N, false) +
+            mkRow('More than 10%', s2U, s2P, s2N, false) +
+            mkRow('Total',         tU,  tP,  tN,  true);
+    }
+
+    function fillFreqBenefit() {
+        const LO = 49.90, HI = 49.97;
+        const oiBand = rows.filter(r => !r.isU && r.freq >= LO && r.freq < HI);
+        const uiBand = rows.filter(r =>  r.isU && r.freq >= LO && r.freq < HI);
+        const totalBonus  = oiBand.reduce((s,r) => s + (r.act1 - r.ref1), 0);
+        const totalEnergy = oiBand.reduce((s,r) => s + r.q1, 0);
+        const missedOpp   = uiBand.reduce((s,r) => s + r.totAct, 0);
+        document.getElementById('fb-slots').innerText  = oiBand.length;
+        document.getElementById('fb-energy').innerText = `${totalEnergy.toFixed(2)} MWh`;
+        document.getElementById('fb-bonus').innerText  = `₹${fmtIN(totalBonus)}`;
+        document.getElementById('fb-missed').innerText = `₹${fmtIN(missedOpp)}`;
+        if(oiBand.length === 0) {
+            document.getElementById('fb-oi-no').style.display   = 'block';
+            document.getElementById('fb-oi-wrap').style.display = 'none';
+        } else {
+            document.getElementById('fb-oi-no').style.display   = 'none';
+            document.getElementById('fb-oi-wrap').style.display = 'block';
+            const b = document.getElementById('fb-oi-body'); b.innerHTML = '';
+            let tQ1=0, tRef=0, tAct=0, tBonus=0;
+            oiBand.forEach(r => {
+                const mult  = getMult(r.freq, 'OI', 1);
+                const bonus = r.act1 - r.ref1;
+                tQ1 += r.q1; tRef += r.ref1; tAct += r.act1; tBonus += bonus;
+                b.innerHTML += `<tr>
+                    <td>${r.date}</td><td>${r.time}</td>
+                    <td style="color:#1d4ed8;font-weight:600;">${r.freq.toFixed(3)}</td>
+                    <td class="text-right">${r.sch.toFixed(2)}</td>
+                    <td class="text-right">${r.act.toFixed(2)}</td>
+                    <td class="text-right">${r.pct.toFixed(2)}%</td>
+                    <td class="text-right">${r.q1.toFixed(2)}</td>
+                    <td class="text-right" style="color:#7c3aed;font-weight:600;">${mult.toFixed(4)}</td>
+                    <td class="text-right">&#8377;${fmtIN(r.ref1)}</td>
+                    <td class="text-right">&#8377;${fmtIN(r.act1)}</td>
+                    <td class="text-right" style="color:#6d28d9;font-weight:700;background:#f5f3ff;">&#8377;${fmtIN(bonus)}</td>
+                </tr>`;
+            });
+            b.innerHTML += `<tr class="total-row">
+                <td colspan="6">Total</td>
+                <td class="text-right">${tQ1.toFixed(2)}</td>
+                <td class="text-right">&#8211;</td>
+                <td class="text-right">&#8377;${fmtIN(tRef)}</td>
+                <td class="text-right">&#8377;${fmtIN(tAct)}</td>
+                <td class="text-right" style="color:#6d28d9;background:#f5f3ff;">&#8377;${fmtIN(tBonus)}</td>
+            </tr>`;
+        }
+        if(uiBand.length === 0) {
+            document.getElementById('fb-ui-no').style.display   = 'block';
+            document.getElementById('fb-ui-wrap').style.display = 'none';
+        } else {
+            document.getElementById('fb-ui-no').style.display   = 'none';
+            document.getElementById('fb-ui-wrap').style.display = 'block';
+            const b = document.getElementById('fb-ui-body'); b.innerHTML = '';
+            let tQ1=0, tPay=0, tOpp=0;
+            uiBand.forEach(r => {
+                const oppLoss = r.totAct;
+                tQ1 += r.q1; tPay += r.totAct; tOpp += oppLoss;
+                b.innerHTML += `<tr>
+                    <td>${r.date}</td><td>${r.time}</td>
+                    <td style="color:#dc2626;font-weight:600;">${r.freq.toFixed(3)}</td>
+                    <td class="text-right">${r.sch.toFixed(2)}</td>
+                    <td class="text-right">${r.act.toFixed(2)}</td>
+                    <td class="text-right">${r.pct.toFixed(2)}%</td>
+                    <td class="text-right">${r.q1.toFixed(2)}</td>
+                    <td class="text-right sign-neg">&#8377;${fmtIN(r.totAct)}</td>
+                    <td class="text-right" style="color:#dc2626;font-weight:700;background:#fff1f2;">&#8377;${fmtIN(oppLoss)}</td>
+                </tr>`;
+            });
+            b.innerHTML += `<tr class="total-row">
+                <td colspan="6">Total</td>
+                <td class="text-right">${tQ1.toFixed(2)}</td>
+                <td class="text-right sign-neg">&#8377;${fmtIN(tPay)}</td>
+                <td class="text-right" style="color:#dc2626;background:#fff1f2;">&#8377;${fmtIN(tOpp)}</td>
+            </tr>`;
+        }
+    }
+
+    function renderCharts() {
+        if(charts.slot)         charts.slot.destroy();
+        if(charts.fin)          charts.fin.destroy();
+        if(charts.trend)        charts.trend.destroy();
+        if(charts.cumulative)   charts.cumulative.destroy();
+        if(charts.penaltyBlock) charts.penaltyBlock.destroy();
+        if(charts.lossBlock)    charts.lossBlock.destroy();
+
+        const cU = rows.filter(r => r.isU).length;
+        const cO_10 = rows.filter(r => !r.isU && Math.abs(r.pct) > 10).length;
+        const cOther = rows.length - cU - cO_10;
+        charts.slot = new Chart(document.getElementById('slotChart').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['Under','Over >10%','Other'], datasets: [{ data: [cU, cO_10, cOther], backgroundColor: ['#ef4444','#f59e0b','#10b981'] }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const vUP   = Math.abs(rows.filter(r =>  r.isU).reduce((s,r) => s + r.totAct, 0));
+        const vOR   = rows.filter(r => !r.isU).reduce((s,r) => s + r.totAct, 0);
+        const vPen  = Math.abs(rows.filter(r =>  r.isU).reduce((s,r) => s + (r.d1 + r.d2), 0));
+        const vLoss = rows.filter(r => !r.isU).reduce((s,r) => s + (r.d1 + r.d2), 0);
+        charts.fin = new Chart(document.getElementById('finChart').getContext('2d'), {
+            type: 'pie',
+            data: { labels: ['UI Payable','OI Rec','Penalty','Rev Loss'], datasets: [{ data: [vUP, vOR, vPen, vLoss], backgroundColor: ['#ef4444','#10b981','#7f1d1d','#b45309'] }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: c => c.label + ': ₹' + Math.round(c.parsed).toLocaleString('en-IN') } } } }
+        });
+
+        const dates = [...new Set(rows.map(r => r.date))].sort();
+        const dPen  = dates.map(d => Math.abs(rows.filter(r => r.date === d &&  r.isU).reduce((s,r) => s + (r.d1 + r.d2), 0)));
+        const dLoss = dates.map(d => rows.filter(r => r.date === d && !r.isU).reduce((s,r) => s + (r.d1 + r.d2), 0));
+        charts.trend = new Chart(document.getElementById('trendChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: dates, datasets: [{ label: 'Penalty', data: dPen, borderColor: '#ef4444', tension: 0.3 },{ label: 'Rev Loss', data: dLoss, borderColor: '#f59e0b', tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => fmtRupeesAxis(v) } } }, plugins: { tooltip: { callbacks: { label: c => c.dataset.label + ': ₹' + Math.round(c.parsed.y).toLocaleString('en-IN') } } } }
+        });
+
+        const allTimeBlocks = [];
+        for(let h=0; h<24; h++) for(let m of [0,15,30,45]) allTimeBlocks.push(h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0'));
+
+        const cumulativeData = allTimeBlocks.map(block => {
+            const penaltySum   = rows.filter(r => r.time === block &&  r.isU).reduce((s,r) => s + Math.abs(r.d1 + r.d2), 0);
+            const lossSum      = rows.filter(r => r.time === block && !r.isU).reduce((s,r) => s + Math.abs(r.d1 + r.d2), 0);
+            const penaltyCount = new Set(rows.filter(r => r.time === block &&  r.isU && Math.abs(r.d1 + r.d2) > 0).map(r => r.date)).size;
+            const lossCount    = new Set(rows.filter(r => r.time === block && !r.isU && Math.abs(r.d1 + r.d2) > 0).map(r => r.date)).size;
+            return { block, penaltySum, lossSum, penaltyCount, lossCount };
+        }).filter(d => d.penaltyCount > 1 || d.lossCount > 1);
+
+        const ctxCum = document.getElementById('cumulativeSlotChart').getContext('2d');
+        if(cumulativeData.length === 0) {
+            document.getElementById('cumulative-slot-no-data').style.display = 'block'; ctxCum.canvas.style.display = 'none';
+        } else {
+            document.getElementById('cumulative-slot-no-data').style.display = 'none'; ctxCum.canvas.style.display = 'block';
+            charts.cumulative = new Chart(ctxCum, {
+                type: 'bar',
+                data: { labels: cumulativeData.map(d => d.block), datasets: [
+                    { label: 'Total Penalty (₹)', data: cumulativeData.map(d => d.penaltySum), backgroundColor: 'rgba(239,68,68,0.7)', borderColor: '#dc2626', borderWidth: 1 },
+                    { label: 'Total Loss (₹)',    data: cumulativeData.map(d => d.lossSum),    backgroundColor: 'rgba(245,158,11,0.7)', borderColor: '#d97706', borderWidth: 1 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false,
+                    scales: { x: { title: { display:true, text:'15-Minute Time Slot', font:{weight:'bold'} }, ticks: { maxRotation:90, minRotation:45, font:{size:9} } },
+                              y: { title: { display:true, text:'Total Amount (₹)', font:{weight:'bold'} }, beginAtZero:true, ticks: { callback: v => fmtRupeesAxis(v) } } },
+                    plugins: { legend: { position:'top' }, tooltip: { callbacks: {
+                        label: c => c.dataset.label + ': ₹' + Math.round(c.parsed.y).toLocaleString('en-IN'),
+                        afterBody: ti => { const idx=ti[0].dataIndex, d=cumulativeData[idx];
+                            const pA = d.penaltyCount > 0 ? Math.round(d.penaltySum/d.penaltyCount) : 0;
+                            const lA = d.lossCount    > 0 ? Math.round(d.lossSum/d.lossCount)       : 0;
+                            return ['\n--- Details ---',`Slot: ${d.block}`,
+                                `Penalty: ₹${Math.round(d.penaltySum).toLocaleString('en-IN')} (${d.penaltyCount} days, avg ₹${pA.toLocaleString('en-IN')})`,
+                                `Loss: ₹${Math.round(d.lossSum).toLocaleString('en-IN')} (${d.lossCount} days, avg ₹${lA.toLocaleString('en-IN')})`]; }
+                    }}}
+                }
+            });
+        }
+
+        const THRESHOLD = 1;
+        const blockData = allTimeBlocks.map(block => {
+            const penaltyDates  = new Set(rows.filter(r => r.time===block &&  r.isU && Math.abs(r.d1+r.d2)>0).map(r => r.date));
+            const lossDates     = new Set(rows.filter(r => r.time===block && !r.isU && Math.abs(r.d1+r.d2)>0).map(r => r.date));
+            const penaltyAmount = rows.filter(r => r.time===block &&  r.isU).reduce((s,r) => s+Math.abs(r.d1+r.d2),0);
+            const lossAmount    = rows.filter(r => r.time===block && !r.isU).reduce((s,r) => s+Math.abs(r.d1+r.d2),0);
+            return { block, penaltyDays:penaltyDates.size, lossDays:lossDates.size, penaltyAmount, lossAmount };
+        });
+        const penaltyBlocks = blockData.filter(b => b.penaltyDays > THRESHOLD);
+        const lossBlocks    = blockData.filter(b => b.lossDays    > THRESHOLD);
+        document.getElementById('penalty-count-badge').innerText = `${penaltyBlocks.length} blocks`;
+        document.getElementById('loss-count-badge').innerText    = `${lossBlocks.length} blocks`;
+
+        const ctx4 = document.getElementById('penaltyBlockChart').getContext('2d');
+        if(penaltyBlocks.length === 0) { document.getElementById('penalty-block-no-data').style.display='block'; ctx4.canvas.style.display='none'; }
+        else {
+            document.getElementById('penalty-block-no-data').style.display='none'; ctx4.canvas.style.display='block';
+            charts.penaltyBlock = new Chart(ctx4, { type:'bar',
+                data: { labels: penaltyBlocks.map(b=>b.block), datasets: [
+                    { label:'Days Count', data:penaltyBlocks.map(b=>b.penaltyDays), backgroundColor:'rgba(239,68,68,0.7)', borderColor:'#dc2626', borderWidth:2, yAxisID:'y' },
+                    { label:'Total Amount (₹)', data:penaltyBlocks.map(b=>b.penaltyAmount), type:'line', borderColor:'#7f1d1d', backgroundColor:'transparent', borderWidth:3, pointRadius:4, pointBackgroundColor:'#7f1d1d', yAxisID:'y1', tension:0.3 }
+                ]},
+                options: { responsive:true, maintainAspectRatio:false,
+                    scales: { x:{title:{display:true,text:'15-Minute Time Block',font:{weight:'bold'}},ticks:{maxRotation:90,minRotation:45,font:{size:9}}},
+                        y:{type:'linear',position:'left',title:{display:true,text:'Number of Days',font:{weight:'bold'},color:'#1e293b'},beginAtZero:true,ticks:{color:'#1e293b',stepSize:1}},
+                        y1:{type:'linear',position:'right',title:{display:true,text:'Total Penalty (₹)',font:{weight:'bold'},color:'#7f1d1d'},beginAtZero:true,grid:{drawOnChartArea:false},ticks:{color:'#7f1d1d',callback:v=>fmtRupeesAxis(v)}} },
+                    plugins: { legend:{position:'top'}, tooltip:{callbacks:{
+                        label:c=>c.dataset.label==='Days Count'?'Days: '+c.parsed.y:'Total: ₹'+Math.round(c.parsed.y).toLocaleString('en-IN'),
+                        afterBody:ti=>{const idx=ti[0].dataIndex,days=penaltyBlocks[idx].penaltyDays,amt=penaltyBlocks[idx].penaltyAmount,avg=days>0?Math.round(amt/days):0;
+                            return['\n--- Summary ---',`Block: ${penaltyBlocks[idx].block}`,`Days: ${days}`,`Total: ₹${Math.round(amt).toLocaleString('en-IN')}`,`Avg/day: ₹${avg.toLocaleString('en-IN')}`];}
+                    }}}
+                }
+            });
+        }
+
+        const ctx5 = document.getElementById('lossBlockChart').getContext('2d');
+        if(lossBlocks.length === 0) { document.getElementById('loss-block-no-data').style.display='block'; ctx5.canvas.style.display='none'; }
+        else {
+            document.getElementById('loss-block-no-data').style.display='none'; ctx5.canvas.style.display='block';
+            charts.lossBlock = new Chart(ctx5, { type:'bar',
+                data: { labels: lossBlocks.map(b=>b.block), datasets: [
+                    { label:'Days Count', data:lossBlocks.map(b=>b.lossDays), backgroundColor:'rgba(245,158,11,0.7)', borderColor:'#d97706', borderWidth:2, yAxisID:'y' },
+                    { label:'Total Amount (₹)', data:lossBlocks.map(b=>b.lossAmount), type:'line', borderColor:'#b45309', backgroundColor:'transparent', borderWidth:3, pointRadius:4, pointBackgroundColor:'#b45309', yAxisID:'y1', tension:0.3 }
+                ]},
+                options: { responsive:true, maintainAspectRatio:false,
+                    scales: { x:{title:{display:true,text:'15-Minute Time Block',font:{weight:'bold'}},ticks:{maxRotation:90,minRotation:45,font:{size:9}}},
+                        y:{type:'linear',position:'left',title:{display:true,text:'Number of Days',font:{weight:'bold'},color:'#1e293b'},beginAtZero:true,ticks:{color:'#1e293b',stepSize:1}},
+                        y1:{type:'linear',position:'right',title:{display:true,text:'Total Loss (₹)',font:{weight:'bold'},color:'#b45309'},beginAtZero:true,grid:{drawOnChartArea:false},ticks:{color:'#b45309',callback:v=>fmtRupeesAxis(v)}} },
+                    plugins: { legend:{position:'top'}, tooltip:{callbacks:{
+                        label:c=>c.dataset.label==='Days Count'?'Days: '+c.parsed.y:'Total: ₹'+Math.round(c.parsed.y).toLocaleString('en-IN'),
+                        afterBody:ti=>{const idx=ti[0].dataIndex,days=lossBlocks[idx].lossDays,amt=lossBlocks[idx].lossAmount,avg=days>0?Math.round(amt/days):0;
+                            return['\n--- Summary ---',`Block: ${lossBlocks[idx].block}`,`Days: ${days}`,`Total: ₹${Math.round(amt).toLocaleString('en-IN')}`,`Avg/day: ₹${avg.toLocaleString('en-IN')}`];}
+                    }}}
+                }
+            });
+        }
+    }
+
+    function fillTop10() {
+        const worst = rows.filter(r => r.isU).sort((a,b) => (a.d1+a.d2)-(b.d1+b.d2)).slice(0,10);
+        const b = document.getElementById('top-pen-body'); b.innerHTML = '';
+        worst.forEach(r => { b.innerHTML += `<tr><td>${r.date} ${r.time}</td><td class="text-right sign-neg">₹${Math.abs(r.d1+r.d2).toFixed(0)}</td></tr>`; });
+    }
+
+    function drill(type, code) {
+        const isU = type === 'u';
+        document.getElementById('drill-' + type).style.display = 'block';
+        const b = document.getElementById('dt-body-' + type); b.innerHTML = '';
+        const sub = rows.filter(r => r.isU === isU && (code === 's1' || r.q2 > 0));
+        sub.forEach(r => {
+            let slabP = code === 's1' ? r.d1 : r.d2, totP = r.d1 + r.d2;
+            let z = !isU && r.zeroLoss > 0 ? `₹${fmtIN(r.zeroLoss)}` : '-';
+            let extra = isU ? '' : `<td class="text-right">${z}</td>`;
+            b.innerHTML += `<tr>
+                <td>${r.date}</td><td>${r.time}</td><td>${r.freq}</td>
+                <td class="text-right">${r.sch.toFixed(2)}</td><td class="text-right">${r.act.toFixed(2)}</td>
+                <td class="text-right">${r.pct.toFixed(2)}%</td>
+                <td class="text-right">${fmtIN(isU ? -r.totAct : r.totAct)}</td>
+                <td class="text-right" style="background:#fffbeb;">${fmtIN(slabP)}</td>
+                ${extra}<td class="text-right">${fmtIN(totP)}</td>
+            </tr>`;
+        });
+    }
+
+    function fillMat() {
+        const thres = parseFloat(document.getElementById('mat-limit').value) || 5000;
+        const sub   = rows.filter(r => Math.abs(r.d1+r.d2) > thres).sort((a,b) => Math.abs(b.d1+b.d2)-Math.abs(a.d1+a.d2));
+        const b = document.getElementById('tb-mat').querySelector('tbody'); b.innerHTML = '';
+        if(sub.length === 0) b.innerHTML = '<tr><td colspan="7" class="text-center">No records found above threshold.</td></tr>';
+        sub.forEach(r => {
+            let val = comments[r.id] || "";
+            b.innerHTML += `<tr>
+                <td>${r.date}</td><td>${r.time}</td><td>${r.isU ? 'Under' : 'Over'}</td>
+                <td class="text-right">${r.pct.toFixed(2)}%</td>
+                <td class="text-right">${fmtIN(r.isU ? -r.totAct : r.totAct)}</td>
+                <td class="text-right sign-neg">${fmtIN(r.d1+r.d2)}</td>
+                <td><input class="comment-input" value="${val}" oninput="comments['${r.id}']=this.value"></td>
+            </tr>`;
+        });
+    }
+
+    function fillLedger() {
+        const b = document.getElementById('tb-annex').querySelector('tbody'); b.innerHTML = '';
+        rows.forEach(r => {
+            b.innerHTML += `<tr>
+                <td>${r.date}</td><td>${r.time}</td><td>${r.freq}</td>
+                <td class="text-right">${r.sch.toFixed(2)}</td><td class="text-right">${r.act.toFixed(2)}</td>
+                <td class="text-right">${r.pct.toFixed(2)}%</td>
+                <td class="text-right">${fmtIN(r.isU ? -r.totAct : r.totAct)}</td>
+                <td class="text-right">${fmtIN(r.d1+r.d2)}</td>
+            </tr>`;
+        });
+    }
+
+    function updateStep(n) { [1,2,3].forEach(i => { document.getElementById('st'+i).className = i===n ? 'step active' : 'step'; }); }
+
+    function genExcel() {
+        if(!rows.length) return;
+        const data = rows.map(r => ({ Date:r.date, Time:r.time, Freq:r.freq, Sch:r.sch, Act:r.act, Deviation:r.dev, Type:r.isU?'Under':'Over', DSM:r.isU?-r.totAct:r.totAct, Penalty:r.d1+r.d2, Reason:comments[r.id]||"" }));
+        const ws = XLSX.utils.json_to_sheet(data), w = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(w, ws, "Audit"); XLSX.writeFile(w, "DSM_Audit_Report.xlsx");
+    }
+
+    function genPDF() {
+        const el = document.getElementById('res-dash');
+        document.querySelectorAll('.comment-input').forEach(i => { i.parentElement.innerHTML = `<span>${i.value}</span>`; });
+        html2pdf().set({ margin:0.4, filename:'DSM_Audit.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in',format:'a4',orientation:'landscape'} }).from(el).save().then(() => alert("PDF Saved. Refresh page to edit."));
+    }
+
+    function genHTML() {
+        if(!charts.slot || !charts.fin || !charts.trend) { alert('No charts to export. Please ensure Executive Summary has been viewed.'); return; }
+        const clone = document.cloneNode(true);
+
+        /* Hide input tabs in shared HTML — Manual Entry & Excel Upload */
+        clone.querySelectorAll('.tab-button').forEach(btn => {
+            const oc = btn.getAttribute('onclick') || '';
+            if(oc.includes("'manual'") || oc.includes("'excel'")) btn.style.display = 'none';
+        });
+        ['#manual','#excel'].forEach(sel => {
+            const el = clone.querySelector(sel); if(el) el.style.display = 'none';
+        });
+        /* Auto-activate Executive Summary */
+        clone.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            if((btn.getAttribute('onclick')||'').includes("'exec'")) btn.classList.add('active');
+        });
+        clone.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+        const execDivG = clone.querySelector('#exec'); if(execDivG) execDivG.style.display = 'block';
+
+        const execDash = clone.querySelector('#exec-dash');
+        if(execDash) {
+            [['slotChart',charts.slot],['finChart',charts.fin],['trendChart',charts.trend],
+             ['cumulativeSlotChart',charts.cumulative],['penaltyBlockChart',charts.penaltyBlock],['lossBlockChart',charts.lossBlock]
+            ].forEach(([id,ch]) => {
+                if(!ch) return; const canvas = execDash.querySelector('#'+id); if(!canvas) return;
+                const img = document.createElement('img'); img.src = ch.toBase64Image(); img.style.width='100%'; img.style.height='100%';
+                canvas.parentNode.replaceChild(img, canvas);
+            });
+        }
+        const html = clone.documentElement.outerHTML;
+        const blob = new Blob([html], {type:'text/html'});
+        const cleanCompany = (companyName||'Company').replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+        const cleanWeek   = (weekNumber||'').replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+        const filename = `DSM_General_Seller_${cleanCompany}${cleanWeek?'_'+cleanWeek:''}.html`;
+        saveAs(blob, filename);
+        const uPen  = Math.abs(rows.filter(r=>r.isU).reduce((s,r)=>s+(r.d1+r.d2),0));
+        const oLoss = rows.filter(r=>!r.isU).reduce((s,r)=>s+(r.d1+r.d2),0);
+        const net   = rows.reduce((a,b)=>a+(b.isU?-b.totAct:b.totAct),0);
+        const now=new Date(), dateStr=now.toLocaleDateString('en-IN'), timeStr=now.toLocaleTimeString('en-IN');
+        const subject = `DSM Audit Report - ${companyName} - ${weekNumber}`;
+        const body = `Dear Team,%0D%0A%0D%0APlease find attached the DSM Audit Report for ${companyName}.%0D%0A%0D%0AReport Period: ${weekNumber}%0D%0AGenerated: ${dateStr} ${timeStr}%0D%0A%0D%0AKey Highlights:%0D%0A• Total Penalty: ₹${Math.round(uPen).toLocaleString('en-IN')}%0D%0A• Total Loss: ₹${Math.round(oLoss).toLocaleString('en-IN')}%0D%0A• Net Payable: ${net<0?'-':''}₹${Math.round(Math.abs(net)).toLocaleString('en-IN')}%0D%0A%0D%0APlease review and revert with any queries.%0D%0A%0D%0ABest Regards`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+        setTimeout(() => { alert(`HTML file downloaded: ${filename}\n\nOutlook has been opened with a pre-filled email.\n\nPlease attach the downloaded file from your Downloads folder manually.`); }, 500);
+    }
+
+    function printDashboard() {
+        var co = companyName || 'Seller';
+        var wk = weekNumber  || '';
+        var ph = document.getElementById('ph-title');
+        var ps = document.getElementById('ph-sub');
+        if (ph) ph.textContent = 'DSM General Seller Dashboard \u2014 ' + co + (wk ? ' | Week ' + wk : '');
+        if (ps) ps.textContent = 'Printed: ' + new Date().toLocaleString('en-IN') + '  |  Confidential';
+        document.querySelectorAll('.inline-drill').forEach(function(d){ d.style.display='block'; });
+        window.print();
+        setTimeout(function(){
+            document.querySelectorAll('.inline-drill').forEach(function(d){ d.style.display=''; });
+        }, 1500);
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       SAVE & SHARE — embed full data snapshot into HTML
+       FIX: Now saves OI/UI weighted rates + mat-limit and
+            restores them in the boot script
+    ───────────────────────────────────────────────────────── */
+    function saveDashboard() {
+        if (!rows || rows.length === 0) {
+            alert('No data loaded. Please process data first.'); return;
+        }
+
+        /* 1. Collect audit remarks from comment inputs */
+        var snapComments = {};
+        document.querySelectorAll('.comment-input').forEach(function(inp){
+            /* FIX: collect from .comment-input (input elements), not textarea[data-key] */
+            var key = null;
+            var oninputAttr = inp.getAttribute('oninput') || '';
+            var match = oninputAttr.match(/comments\['([^']+)'\]/);
+            if (match) key = match[1];
+            if (key && inp.value.trim()) snapComments[key] = inp.value.trim();
+        });
+        Object.assign(snapComments, comments || {});
+
+        /* FIX #1: Read current OI/UI rate input values */
+        var oiWtdRateVal = parseFloat(document.getElementById('oi-wtd-rate').value) || 0;
+        var uiWtdRateVal = parseFloat(document.getElementById('ui-wtd-rate').value) || 0;
+        var matLimitVal  = parseFloat(document.getElementById('mat-limit').value)   || 5000;
+
+        /* 2. Build snapshot payload — FIX: includes oiWtdRate, uiWtdRate, matLimit */
+        var snapshot = {
+            v           : 3,                          /* version bumped */
+            ts          : new Date().toISOString(),
+            companyName : companyName || '',
+            weekNumber  : weekNumber  || '',
+            rows        : rows,
+            comments    : snapComments,
+            oiWtdRate   : oiWtdRateVal,               /* FIX: saved */
+            uiWtdRate   : uiWtdRateVal,               /* FIX: saved */
+            matLimit    : matLimitVal                   /* FIX: saved */
+        };
+
+        /* FIX #2: Sync input value ATTRIBUTES before cloning
+           cloneNode copies HTML attributes, NOT JS .value property */
+        var inputsToSync = [
+            'oi-wtd-rate', 'ui-wtd-rate', 'mat-limit'
+        ];
+        inputsToSync.forEach(function(id){
+            var inp = document.getElementById(id);
+            if (inp) inp.setAttribute('value', inp.value);
+        });
+        /* Also sync all comment-input fields */
+        document.querySelectorAll('.comment-input').forEach(function(inp){
+            inp.setAttribute('value', inp.value);
+        });
+
+        /* 3. Clone the entire page */
+        var clone = document.documentElement.cloneNode(true);
+
+        /* Hide input tabs in shared snapshot — Manual Entry & Excel Upload */
+        clone.querySelectorAll('.tab-button').forEach(function(btn){
+            var oc = btn.getAttribute('onclick') || '';
+            if(oc.indexOf("'manual'") !== -1 || oc.indexOf("'excel'") !== -1){
+                btn.style.display = 'none';
+            }
+        });
+        var manualDiv = clone.querySelector('#manual');
+        var excelDiv  = clone.querySelector('#excel');
+        if(manualDiv) manualDiv.style.display = 'none';
+        if(excelDiv)  excelDiv.style.display  = 'none';
+        /* Auto-activate Executive Summary tab in shared view */
+        clone.querySelectorAll('.tab-button').forEach(function(btn){
+            btn.classList.remove('active');
+            var oc = btn.getAttribute('onclick') || '';
+            if(oc.indexOf("'exec'") !== -1) btn.classList.add('active');
+        });
+        clone.querySelectorAll('.tab-content').forEach(function(tc){
+            tc.style.display = 'none';
+        });
+        var execDiv = clone.querySelector('#exec');
+        if(execDiv) execDiv.style.display = 'block';
+
+        /* FIX: Clean up synced attributes from live DOM (cosmetic) */
+        inputsToSync.forEach(function(id){
+            var inp = document.getElementById(id);
+            if (inp && !inp.defaultValue) inp.removeAttribute('value');
+        });
+
+        /* 4. Inject snapshot as <script id="dsm-snapshot"> */
+        var existingSnap = clone.querySelector('#dsm-snapshot');
+        if (existingSnap) existingSnap.remove();
+        var snapScript = document.createElement('script');
+        snapScript.id   = 'dsm-snapshot';
+        snapScript.type = 'application/json';
+        snapScript.textContent = JSON.stringify(snapshot);
+        clone.querySelector('head').appendChild(snapScript);
+
+        /* 5. Replace Chart.js canvases with base64 images */
+        var liveCV  = document.querySelectorAll('canvas');
+        var cloneCV = clone.querySelectorAll('canvas');
+        liveCV.forEach(function(cv, i){
+            try {
+                var img = document.createElement('img');
+                img.src = cv.toDataURL('image/png');
+                img.style.cssText = 'width:100%;max-width:100%;height:auto;display:block;';
+                if (cloneCV[i] && cloneCV[i].parentNode)
+                    cloneCV[i].parentNode.replaceChild(img, cloneCV[i]);
+            } catch(e){}
+        });
+
+        /* 6. Hide input sections in shared file */
+        ['manual-section','excel-section','btn-save'].forEach(function(id){
+            var el = clone.querySelector('#'+id);
+            if (el) el.style.display = 'none';
+        });
+        var tabBtns = clone.querySelectorAll('.tab-button');
+        tabBtns.forEach(function(b){
+            if (b.textContent.indexOf('Load Data') >= 0 ||
+                b.textContent.indexOf('Manual')    >= 0 ||
+                b.textContent.indexOf('Excel')     >= 0) {
+                b.style.display = 'none';
+            }
+        });
+
+        /* 7. Show "Shared View" banner in snapshot */
+        var banner = clone.querySelector('#shared-banner');
+        if (banner) {
+            banner.style.display = 'flex';
+            var sbTitle = clone.querySelector('#sb-title');
+            var sbMeta  = clone.querySelector('#sb-meta');
+            var co2 = companyName || 'Seller';
+            var wk2 = weekNumber  || '';
+            if (sbTitle) sbTitle.textContent = 'DSM General Seller Dashboard \u2014 ' + co2 + (wk2 ? ' | Week ' + wk2 : '');
+            if (sbMeta)  sbMeta.textContent  = 'Snapshot: ' + new Date().toLocaleString('en-IN') + '  |  Read-only view';
+        }
+
+        /* 8. Inject auto-restore boot script — FIX #3: restores rates + calls calc functions */
+        var bootScript = document.createElement('script');
+        bootScript.id  = 'dsm-boot';
+        bootScript.textContent = [
+            '(function(){',
+            '  var el = document.getElementById("dsm-snapshot");',
+            '  if (!el) return;',
+            '  try {',
+            '    var snap = JSON.parse(el.textContent);',
+            '    if (!snap || !snap.rows || !snap.rows.length) return;',
+            '    function tryRestore(attempt) {',
+            '      if (attempt > 40) return;',
+            '      if (typeof rows === "undefined" || typeof render === "undefined") {',
+            '        setTimeout(function(){ tryRestore(attempt+1); }, 150);',
+            '        return;',
+            '      }',
+            '      rows        = snap.rows;',
+            '      companyName = snap.companyName || "";',
+            '      weekNumber  = snap.weekNumber  || "";',
+            '      comments    = snap.comments    || {};',
+            '',
+            '      /* FIX: Restore OI/UI weighted rate inputs BEFORE render/calc */',
+            '      var oiInp = document.getElementById("oi-wtd-rate");',
+            '      var uiInp = document.getElementById("ui-wtd-rate");',
+            '      var matInp = document.getElementById("mat-limit");',
+            '      if (oiInp && snap.oiWtdRate)  oiInp.value = snap.oiWtdRate;',
+            '      if (uiInp && snap.uiWtdRate)  uiInp.value = snap.uiWtdRate;',
+            '      if (matInp && snap.matLimit)   matInp.value = snap.matLimit;',
+            '',
+            '      /* Render all tabs (charts will be skipped gracefully in shared view) */',
+            '      render();',
+            '',
+            '      /* FIX: Explicitly recalculate Impact tables with restored rate values */',
+            '      if (typeof calcOIImpact === "function") { try { calcOIImpact(); } catch(e){} }',
+            '      if (typeof calcUIImpact === "function") { try { calcUIImpact(); } catch(e){} }',
+            '      if (typeof fillFreqBenefit === "function") { try { fillFreqBenefit(); } catch(e){} }',
+            '',
+            '      /* Show shared banner */',
+            '      var banner = document.getElementById("shared-banner");',
+            '      if (banner) {',
+            '        banner.style.display = "flex";',
+            '        var sbTitle = document.getElementById("sb-title");',
+            '        var sbMeta  = document.getElementById("sb-meta");',
+            '        if (sbTitle) sbTitle.textContent = "DSM General Seller Dashboard \\u2014 " + companyName + (weekNumber ? " | Week " + weekNumber : "");',
+            '        var ts = snap.ts ? new Date(snap.ts).toLocaleString("en-IN") : "";',
+            '        if (sbMeta)  sbMeta.textContent  = "Snapshot: " + ts + "  |  Read-only view";',
+            '      }',
+            '      ["manual-section","excel-section","btn-save"].forEach(function(id){',
+            '        var el2 = document.getElementById(id);',
+            '        if (el2) el2.style.display = "none";',
+            '      });',
+            '      if (typeof switchTab === "function") switchTab("exec");',
+            '    }',
+            '    tryRestore(0);',
+            '  } catch(e){ console.warn("DSM snapshot restore failed:", e); }',
+            '})();'
+        ].join('\n');
+        var existBoot = clone.querySelector('#dsm-boot');
+        if (existBoot) existBoot.remove();
+        clone.querySelector('body').appendChild(bootScript);
+
+        /* 9. Write and download */
+        var co3 = (companyName || 'Company').replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+        var wk3 = (weekNumber  || '').replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+        var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+        var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+        var url  = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'DSM_General_Seller_' + co3 + (wk3 ? '_' + wk3 : '') + '.html';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+
+        setTimeout(function(){
+            alert('✅ Snapshot saved!\n\nFile: ' + a.download + '\n\nSend this file to anyone — they open it in any browser and see the full dashboard with all data, charts, Impact of OI/UI rates and tabs exactly as you see it now.');
+        }, 600);
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       USER GUIDE sidebar scroll-spy
+    ───────────────────────────────────────────────────────── */
+    (function(){
+        var ugArea = document.getElementById('ug-scroll-area');
+        if (!ugArea) return;
+        var ids = ['ug-start','ug-manual','ug-excel','ug-workflow','ug-export',
+                   'ug-dsm','ug-kpi','ug-ui','ug-oi','ug-matdev','ug-annex','ug-freq','ug-slabs','ug-glossary'];
+        var links = document.querySelectorAll('.ug-link');
+        ugArea.addEventListener('scroll', function(){
+            var cur = ids[0];
+            ids.forEach(function(id){
+                var el = document.getElementById(id);
+                if (el && ugArea.scrollTop + 80 >= el.offsetTop) cur = id;
+            });
+            links.forEach(function(l){
+                var active = l.getAttribute('href') === '#' + cur;
+                l.style.background = active ? 'rgba(255,255,255,0.13)' : '';
+                l.style.borderLeft = active ? '3px solid #a5b4fc' : '3px solid transparent';
+                l.style.color      = active ? 'white' : 'rgba(255,255,255,0.78)';
+            });
+        });
+        links.forEach(function(l){
+            l.addEventListener('click', function(e){
+                e.preventDefault();
+                var t = document.getElementById(l.getAttribute('href').replace('#',''));
+                if (t) ugArea.scrollTo({top: t.offsetTop - 16, behavior:'smooth'});
+            });
+        });
+    })();
+
+</script>
+
+    <!-- RCA TAB -->
+    <div id="rca" class="tab-content">
+<div style="padding:16px 0;">
+  <div class="rca-summary-bar" id="rca-kpi-bar">
+    <div class="rca-kpi rred">  <div class="rval" id="rk-total">0</div><div class="rlbl">Total Deviations</div></div>
+    <div class="rca-kpi rred">  <div class="rval" id="rk-open">0</div> <div class="rlbl">🔴 Open</div></div>
+    <div class="rca-kpi ryellow"><div class="rval" id="rk-ip">0</div>  <div class="rlbl">🟡 In Progress</div></div>
+    <div class="rca-kpi rgreen"><div class="rval" id="rk-closed">0</div><div class="rlbl">🟢 Closed</div></div>
+    <div class="rca-kpi rblue"> <div class="rval" id="rk-disp">0</div> <div class="rlbl">🔵 Disputed</div></div>
+    <div class="rca-kpi rpurple"><div class="rval" id="rk-pen">₹0</div><div class="rlbl">Total DSM (₹)</div></div>
+    <div class="rca-kpi rred">  <div class="rval" id="rk-freqloss">₹0</div><div class="rlbl">Freq-Blocked (₹)</div></div>
+  </div>
+  <div id="rca-no-data" class="no-data-msg">📋 No data yet. Add slots via Manual or upload Excel to populate the RCA register.</div>
+  <div id="rca-dash" style="display:none;">
+
+    <!-- RCA Analytics Panel -->
+    <div class="rca-analytics" id="rca-analytics-panel">
+      <h3><i class="fas fa-chart-bar"></i> RCA Cost Analytics &amp; Pareto Analysis
+        <span style="margin-left:auto;font-size:.72rem;color:var(--text-muted);font-weight:400;">Click any bar to filter table below</span>
+      </h3>
+
+      <!-- Controls -->
+      <div class="pareto-controls">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label>Min DSM Amount (₹)</label>
+          <input type="number" id="rca-min-amt" value="0" step="1000" oninput="applyRCAThreshold()" onchange="applyRCAThreshold()">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label>Top N Reasons</label>
+          <input type="number" id="rca-topn" value="8" min="1" max="20" style="width:60px;" onchange="renderPareto()">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label>Factor:</label>
+          <div class="factor-filter-strip">
+            <button class="ffs-btn active-all" id="ffs-all"  onclick="setFactorFilter('ALL',this)">All</button>
+            <button class="ffs-btn" id="ffs-int"  onclick="setFactorFilter('Internal',this)">🔵 Internal</button>
+            <button class="ffs-btn" id="ffs-ext"  onclick="setFactorFilter('External',this)">🔴 External</button>
+            <button class="ffs-btn" id="ffs-semi" onclick="setFactorFilter('Semi',this)">🟡 Semi</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label>Type:</label>
+          <div class="factor-filter-strip">
+            <button class="ffs-btn active-all" id="fft-all" onclick="setTypeFilter('ALL',this)">All</button>
+            <button class="ffs-btn" id="fft-oi"  onclick="setTypeFilter('OI',this)">▲ OI</button>
+            <button class="ffs-btn" id="fft-ui"  onclick="setTypeFilter('UI',this)">▼ UI</button>
+          </div>
+        </div>
+        <button class="btn btn-outline" onclick="resetParetoFilters()" style="font-size:.73rem;padding:4px 10px;">↺ Reset</button>
+      </div>
+
+      <!-- Insight strip -->
+      <div class="pareto-insight" id="pareto-insight">
+        📊 Save RCA entries to see cost analytics and key reason identification.
+      </div>
+
+      <!-- Charts grid -->
+      <div class="pareto-grid">
+        <div class="pareto-card">
+          <h4>📊 DSM by Root Cause Category</h4>
+          <div id="pareto-cat-bars">—</div>
+        </div>
+        <div class="pareto-card">
+          <h4>🏷️ DSM by Factor Type (Internal vs External)</h4>
+          <div id="pareto-factor-bars">—</div>
+        </div>
+      </div>
+      <div class="pareto-grid">
+        <div class="pareto-card">
+          <h4>👤 DSM by Responsible Team</h4>
+          <div id="pareto-team-bars">—</div>
+        </div>
+        <div class="pareto-card">
+          <h4>📅 DSM by Date</h4>
+          <div id="pareto-date-bars">—</div>
+        </div>
+      </div>
+
+      <!-- Key reasons -->
+      <div id="pareto-key-reasons" style="display:none;">
+        <div class="rca-stitle" style="margin-top:4px;">🎯 Key Reasons (80% of DSM Cost)</div>
+        <div class="key-reason-chips" id="kr-chips"></div>
+      </div>
+    </div>
+    <!-- End Analytics Panel -->
+
+    <div class="table-wrap">
+      <div class="rca-toolbar">
+        <h2>📋 DSM Deviation & RCA Register</h2>
+        <button class="rca-fbtn active" onclick="rcaFilter('ALL',this)">All</button>
+        <button class="rca-fbtn" onclick="rcaFilter('OI',this)">▲ Over Injection</button>
+        <button class="rca-fbtn" onclick="rcaFilter('UI',this)">▼ Under Injection</button>
+        <button class="rca-fbtn" onclick="rcaFilter('Open',this)">🔴 Open RCA</button>
+        <button class="btn btn-primary" onclick="exportRCACSV()" style="font-size:.75rem;padding:5px 12px;">
+          <i class="fas fa-file-excel"></i> Export All RCA
+        </button>
+        <button class="btn btn-outline" onclick="exportActionTracker()" style="font-size:.75rem;padding:5px 12px;">
+          <i class="fas fa-tasks"></i> Action Tracker
+        </button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Date</th><th>Time</th><th class="text-right">Sch</th><th class="text-right">Act</th>
+          <th class="text-right">Dev</th><th>Type</th><th class="text-right">DSM (₹)</th>
+          <th class="text-right">FreqBlocked</th><th>RCA Status</th><th>RCA</th>
+        </tr></thead>
+        <tbody id="rcaBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+<!-- ══════════════════════════════════════════════════════════════ -->
+
+
+    <div id="rcaToast"></div>
+<script>
+const RCA_STORE = {};
+const RCA_SLOTS = {};
+let RCA_FILTER = 'ALL';
+
+// Sub-reasons for WS sellers
+const RCA_REASONS = {
+  A:[{code:'A1',label:'Planned Maintenance / Outage',ctrl:'Yes',factor:'Internal',team:'O&M'},
+     {code:'A2',label:'Forced Outage / Unit Trip',ctrl:'Partial',factor:'Internal',team:'Operations'},
+     {code:'A3',label:'Wind/Solar Resource Low',ctrl:'No',factor:'External',team:'Resource Planning'}],
+  B:[{code:'B1',label:'SLDC Backdown Instruction',ctrl:'No',factor:'External',team:'Grid Interface'},
+     {code:'B2',label:'NLDC/RPC Instruction',ctrl:'No',factor:'External',team:'Grid Interface'}],
+  C:[{code:'C1',label:'Schedule Filing Error',ctrl:'Yes',factor:'Internal',team:'Scheduling'},
+     {code:'C2',label:'Data Mismatch with SLDC',ctrl:'Partial',factor:'Internal',team:'Scheduling'}],
+  D:[{code:'D1',label:'Transmission Constraint',ctrl:'No',factor:'External',team:'Transmission'},
+     {code:'D2',label:'Grid Disturbance / Outage',ctrl:'No',factor:'External',team:'Grid Interface'}],
+  E:[{code:'E1',label:'Inverter / WTG Failure',ctrl:'Partial',factor:'Internal',team:'Maintenance'},
+     {code:'E2',label:'SCADA / Communication Failure',ctrl:'Partial',factor:'Internal',team:'IT/SCADA'}],
+  F:[{code:'F1',label:'Operator Error',ctrl:'Yes',factor:'Internal',team:'Operations'},
+     {code:'F2',label:'Control Room Failure',ctrl:'Yes',factor:'Internal',team:'Operations'}],
+  G:[{code:'G1',label:'Metering Failure',ctrl:'Partial',factor:'Internal',team:'Metering'},
+     {code:'G2',label:'CT/PT Error',ctrl:'Partial',factor:'Internal',team:'Metering'}],
+  H:[{code:'H1',label:'Force Majeure / Natural Event',ctrl:'No',factor:'External',team:'Management'},
+     {code:'H2',label:'Cybersecurity Incident',ctrl:'Partial',factor:'Internal',team:'IT/SCADA'}]
+};
+
+// Build RCA data from existing R[] array
+function getRCAData(){
+  if(!rows || rows.length === 0) return [];
+  return rows.filter(r => {
+    const hasDev = Math.abs(r.dev || 0) > 0.001;
+    const hasDSM = Math.abs((r.d1||0)+(r.d2||0)) > 0.01;
+    return hasDev || hasDSM;
+  }).map((r,idx) => ({
+    rid: r.id || ('R'+String(idx+1).padStart(3,'0')),
+    date: r.date, time: r.time,
+    sch: r.sch, act: r.act,
+    dev: r.dev || 0,
+    type: r.isU ? 'UI' : 'OI',
+    dsm: Math.abs((r.d1||0)+(r.d2||0)),
+    freqBlocked: 0,
+    freqHit: false,
+    pen: r.isU  ? Math.abs((r.d1||0)+(r.d2||0)) : 0,
+    rl:  !r.isU ? Math.abs((r.d1||0)+(r.d2||0)) : 0,
+    grossOI: !r.isU ? Math.abs(r.totAct||0) : 0
+  }));
+}
+function getRCAData_WS_unused(){
+  return (R||[]).map((r,idx)=>({
+    rid: r.id||('R'+String(idx+1).padStart(3,'0')),
+    date: r.date, time: r.time,
+    sch: r.sch, act: r.act,
+    dev: r.isO ? r.ad : -r.ad,
+    type: r.isU?'UI':r.isO?'OI':'OK',
+    dsm: r.td,
+    freqBlocked: r.freqBlocked||0,
+    freqHit: r.freqHit||false,
+    pen: r.pen||0,
+    rl: r.rl||0,
+    grossOI: r.grossOI||0
+  }));
+}
+
+function fillRCATab(){
+  const data = getRCAData();
+  const nd = document.getElementById('rca-no-data');
+  const dash = document.getElementById('rca-dash');
+  if(!data.length){nd.style.display='block';dash.style.display='none';return;}
+  nd.style.display='none';dash.style.display='block';
+  buildRCATable(data);
+  updateRCAKPIs(data);
+  setTimeout(renderPareto,80); // after DOM is built
+}
+
+function buildRCATable(data){
+  const tbody = document.getElementById('rcaBody');
+  tbody.innerHTML='';
+  const filtered = data.filter(r=>{
+    if(RCA_FILTER==='ALL') return true;
+    if(RCA_FILTER==='OI') return r.type==='OI';
+    if(RCA_FILTER==='UI') return r.type==='UI';
+    if(RCA_FILTER==='Open'){
+      const s=RCA_STORE[r.rid]; return !s||s.status==='Open';
+    }
+    return true;
+  });
+  filtered.forEach((r,i)=>{
+    const saved=RCA_STORE[r.rid];
+    const status=saved?saved.status:'None';
+    const dotCls=status==='In Progress'?'dot-InProgress':`dot-${status}`;
+    const devColor=r.type==='OI'?'#ef4444':r.type==='UI'?'#f59e0b':'#10b981';
+    const devSign=r.type==='OI'?'+':r.type==='UI'?'-':'';
+    const freqTd=r.freqHit?`<span style="color:#dc2626;font-weight:700">${fR(r.freqBlocked)}</span>`:'—';
+    tbody.insertAdjacentHTML('beforeend',`
+      <tr class="rca-row-tr" id="rrow-${r.rid}" onclick="toggleRCAPanel('${r.rid}')">
+        <td>${i+1}</td><td>${r.date}</td><td style="font-family:monospace;">${r.time}</td>
+        <td class="text-right">${r.sch.toFixed(2)}</td><td class="text-right">${r.act.toFixed(2)}</td>
+        <td class="text-right" style="font-weight:700;color:${devColor}">${devSign}${Math.abs(r.dev).toFixed(3)}</td>
+        <td><span class="dev-badge dev-${r.type}">${r.type==='OI'?'▲ Over':r.type==='UI'?'▼ Under':'✓ OK'}</span></td>
+        <td class="text-right" style="${r.dsm===0&&r.freqHit?'color:#dc2626;font-weight:700':''}">${fR(r.dsm)}</td>
+        <td class="text-right">${freqTd}</td>
+        <td><span class="rca-dot ${dotCls}"></span>${status==='None'?'Not Filed':status}</td>
+        <td><span style="color:var(--primary);font-size:.72rem;"><i class="fas fa-chevron-down"></i> RCA</span></td>
+      </tr>
+      <tr class="rca-expand-tr"><td colspan="11">${buildRCAPanelHTML(r)}</td></tr>
+    `);
+    if(saved) setTimeout(()=>restoreRCAFields(r.rid,saved),80);
+  });
+}
+
+function buildRCAPanelHTML(r){
+  const rid=r.rid;
+  const devColor=r.type==='OI'?'#ef4444':r.type==='UI'?'#f59e0b':'#10b981';
+  const devLabel=r.type==='OI'?'Over Injection':r.type==='UI'?'Under Injection':'Normal';
+  const freqAlert=r.freqHit?`<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e;font-weight:600;">
+    📡 50.05 Hz Rule Applied — OI receivable blocked: ₹${fR(r.grossOI)} | Net DSM: ₹0</div>`:'';
+  return `<div class="rca-panel" id="rca-panel-${rid}">
+  <div class="rca-inner">
+    ${freqAlert}
+    <div class="rca-ph">
+      <span class="rbadge">RCA</span>
+      <span>${r.date} &nbsp;|&nbsp; <span style="font-family:monospace">${r.time}</span> &nbsp;|&nbsp;
+        <span style="color:${devColor};font-weight:800">${devLabel}</span> &nbsp;|&nbsp;
+        Dev: ${r.type==='OI'?'+':'−'}${Math.abs(r.dev).toFixed(3)} MU &nbsp;|&nbsp;
+        DSM: ₹${fR(r.dsm)}${r.freqHit?' (Blocked)':''}
+      </span>
+      <span class="rchint">Click row to collapse ▲</span>
+    </div>
+
+    <div class="rca-stitle">📂 ROOT CAUSE IDENTIFICATION</div>
+    <div class="rgrid">
+      <div class="rca-field"><label>Category</label>
+        <select id="rcat-${rid}" onchange="onRCACatChange('${rid}')">
+          <option value="">— Select Category —</option>
+          <option value="A">A — Machine/Plant Availability</option>
+          <option value="B">B — SLDC/NLDC Instruction</option>
+          <option value="C">C — Scheduling Error</option>
+          <option value="D">D — Transmission Constraint</option>
+          <option value="E">E — Equipment Failure</option>
+          <option value="F">F — Operations Error</option>
+          <option value="G">G — Metering Issue</option>
+          <option value="H">H — Force Majeure</option>
+        </select>
+      </div>
+      <div class="rca-field"><label>Sub-Reason</label>
+        <select id="rsub-${rid}" onchange="onRCASubChange('${rid}')"><option value="">— Select —</option></select>
+      </div>
+    </div>
+    <div class="rca-field" style="margin-top:8px;"><label>Factor Type (Override)</label>
+      <div class="ftags" id="ftags-${rid}">
+        <span class="ftag fi" onclick="rcaSelFactor('${rid}','Internal')">🔵 Internal</span>
+        <span class="ftag fe" onclick="rcaSelFactor('${rid}','External')">🔴 External</span>
+        <span class="ftag fs" onclick="rcaSelFactor('${rid}','Semi-Controllable')">🟡 Semi</span>
+      </div>
+    </div>
+    <div class="rgrid3" style="margin-top:8px;">
+      <div class="rca-field"><label>Controllable?</label><div class="rca-auto" id="rctrl-${rid}">—</div></div>
+      <div class="rca-field"><label>Factor</label><div class="rca-auto" id="rfactor-${rid}">—</div></div>
+      <div class="rca-field"><label>Responsible Team</label><div class="rca-auto" id="rteam-${rid}">—</div></div>
+    </div>
+    <div class="rgrid" style="margin-top:8px;">
+      <div class="rca-field"><label>Immediate Cause (What happened?)</label>
+        <textarea id="rimm-${rid}" placeholder="e.g. Unit tripped due to boiler flame failure at 06:15 hrs"></textarea>
+      </div>
+      <div class="rca-field"><label>Root Cause (Why not prevented?)</label>
+        <textarea id="rroot-${rid}" placeholder="e.g. Preventive maintenance schedule not followed for Month X"></textarea>
+      </div>
+    </div>
+    <div id="rdisp-row-${rid}" class="disp-flag" style="display:none;">
+      <i class="fas fa-gavel"></i><strong>Dispute Eligible (SLDC/Force Majeure)</strong>
+      <label style="margin-left:10px;cursor:pointer;"><input type="checkbox" id="rdisp-${rid}"> Mark for Dispute Filing</label>
+    </div>
+
+    <div class="rca-stitle">🛠️ ACTION PLAN & CLOSURE</div>
+    <div class="rgrid">
+      <div class="rca-field"><label>Corrective Action Taken / Planned</label>
+        <textarea id="ract-${rid}" placeholder="Specific actions with timelines..."></textarea>
+      </div>
+      <div class="rca-field"><label>Supporting Documents / SLDC Ref</label>
+        <textarea id="rref-${rid}" placeholder="Log No., SLDC communication ref, etc."></textarea>
+      </div>
+    </div>
+    <div class="rgrid3" style="margin-top:8px;">
+      <div class="rca-field"><label>Owner (Name / Designation)</label>
+        <input type="text" id="rown-${rid}" placeholder="e.g. Plant Manager">
+      </div>
+      <div class="rca-field"><label>Target Closure Date</label>
+        <input type="date" id="rtdt-${rid}">
+      </div>
+      <div class="rca-field"><label>RCA Status</label>
+        <select id="rstat-${rid}">
+          <option value="Open">🔴 Open</option>
+          <option value="In Progress">🟡 In Progress</option>
+          <option value="Closed">🟢 Closed</option>
+          <option value="Disputed">🔵 Disputed</option>
+        </select>
+      </div>
+    </div>
+    <div class="rca-acts">
+      <button class="btn btn-primary" onclick="event.stopPropagation();saveRCAEntry('${rid}')">
+        <i class="fas fa-save"></i> Save RCA</button>
+      <button class="btn btn-outline" style="background:#10b981;color:#fff;border:none;" onclick="event.stopPropagation();markRCAClosed('${rid}')">
+        <i class="fas fa-check"></i> Mark Closed</button>
+      <button class="btn btn-outline" onclick="event.stopPropagation();exportSingleRCA('${rid}')">
+        <i class="fas fa-download"></i> Export This RCA</button>
+      <button class="btn btn-outline" onclick="event.stopPropagation();closeRCAPanel('${rid}')">
+        <i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── Event handlers ────────────────────────────────────────────
+function toggleRCAPanel(rid){document.getElementById('rca-panel-'+rid).classList.toggle('open');}
+function closeRCAPanel(rid){document.getElementById('rca-panel-'+rid).classList.remove('open');}
+
+function onRCACatChange(rid){
+  const cat=document.getElementById('rcat-'+rid).value;
+  const sub=document.getElementById('rsub-'+rid);
+  sub.innerHTML='<option value="">— Select —</option>';
+  clearRCAAutoFields(rid);
+  const disp=document.getElementById('rdisp-row-'+rid);
+  if(disp) disp.style.display=(cat==='B'||cat==='H')?'flex':'none';
+  if(!cat||!RCA_REASONS[cat]) return;
+  RCA_REASONS[cat].forEach(s=>sub.insertAdjacentHTML('beforeend',
+    `<option value="${s.code}">${s.code} — ${s.label}</option>`));
+}
+
+function onRCASubChange(rid){
+  const cat=document.getElementById('rcat-'+rid).value;
+  const code=document.getElementById('rsub-'+rid).value;
+  if(!cat||!code){clearRCAAutoFields(rid);return;}
+  const sub=(RCA_REASONS[cat]||[]).find(s=>s.code===code);
+  if(!sub) return;
+  setRCAAutoField(rid,'ctrl',sub.ctrl);
+  setRCAAutoField(rid,'factor',sub.factor);
+  setRCAAutoField(rid,'team',sub.team);
+  rcaHighlightFactor(rid,sub.factor);
+}
+
+function setRCAAutoField(rid,key,val){
+  const el=document.getElementById('r'+key+'-'+rid);
+  if(el){el.textContent=val;el.classList.add('filled');}
+}
+function clearRCAAutoFields(rid){
+  ['ctrl','factor','team'].forEach(k=>{
+    const el=document.getElementById('r'+k+'-'+rid);
+    if(el){el.textContent='—';el.classList.remove('filled');}
+  });
+}
+function rcaSelFactor(rid,factor){
+  rcaHighlightFactor(rid,factor);setRCAAutoField(rid,'factor',factor);
+}
+function rcaHighlightFactor(rid,factor){
+  const c=document.getElementById('ftags-'+rid);if(!c)return;
+  c.querySelectorAll('.ftag').forEach(t=>{
+    t.classList.remove('sel-tag');
+    if(t.textContent.includes(factor.split('-')[0].trim()))t.classList.add('sel-tag');
+  });
+}
+
+// ── Save / Restore ────────────────────────────────────────────
+function saveRCAEntry(rid){
+  const g=id=>{const e=document.getElementById(id);return e?e.value||e.textContent||'':'';};
+  RCA_STORE[rid]={
+    cat:g('rcat-'+rid),sub:g('rsub-'+rid),
+    ctrl:g('rctrl-'+rid),factor:g('rfactor-'+rid),team:g('rteam-'+rid),
+    imm:g('rimm-'+rid),root:g('rroot-'+rid),
+    act:g('ract-'+rid),ref:g('rref-'+rid),
+    own:g('rown-'+rid),tdt:g('rtdt-'+rid),status:g('rstat-'+rid),
+    disputed:document.getElementById('rdisp-'+rid)?document.getElementById('rdisp-'+rid).checked:false,
+    savedAt:new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})
+  };
+  fillRCATab();
+  setTimeout(()=>{
+    document.getElementById('rca-panel-'+rid)?.classList.add('open');
+    restoreRCAFields(rid,RCA_STORE[rid]);
+  },60);
+  rcaToast('✅ RCA Saved — '+rid);
+  setTimeout(renderPareto,150);
+}
+
+function markRCAClosed(rid){
+  const s=document.getElementById('rstat-'+rid);if(s)s.value='Closed';
+  saveRCAEntry(rid);
+}
+
+function restoreRCAFields(rid,data){
+  if(!data)return;
+  const pairs={['rcat-'+rid]:data.cat,['rsub-'+rid]:data.sub,['rimm-'+rid]:data.imm,
+    ['rroot-'+rid]:data.root,['ract-'+rid]:data.act,['rref-'+rid]:data.ref,
+    ['rown-'+rid]:data.own,['rtdt-'+rid]:data.tdt,['rstat-'+rid]:data.status};
+  Object.entries(pairs).forEach(([id,val])=>{const e=document.getElementById(id);if(e&&val)e.value=val;});
+  if(data.cat){
+    onRCACatChange(rid);
+    setTimeout(()=>{
+      const sub=document.getElementById('rsub-'+rid);if(sub&&data.sub)sub.value=data.sub;
+      setRCAAutoField(rid,'ctrl',data.ctrl);setRCAAutoField(rid,'factor',data.factor);setRCAAutoField(rid,'team',data.team);
+      rcaHighlightFactor(rid,data.factor);
+    },40);
+  }
+  if(data.disputed){const c=document.getElementById('rdisp-'+rid);if(c)c.checked=true;}
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+function updateRCAKPIs(data){
+  let open=0,ip=0,closed=0,disp=0,totalDSM=0,totalFreq=0;
+  data.forEach(r=>{
+    totalDSM+=r.dsm;totalFreq+=r.freqBlocked;
+    const s=RCA_STORE[r.rid];
+    if(!s||s.status==='Open')open++;
+    else if(s.status==='In Progress')ip++;
+    else if(s.status==='Closed')closed++;
+    else if(s.status==='Disputed')disp++;
+  });
+  document.getElementById('rk-total').textContent=data.length;
+  document.getElementById('rk-open').textContent=open;
+  document.getElementById('rk-ip').textContent=ip;
+  document.getElementById('rk-closed').textContent=closed;
+  document.getElementById('rk-disp').textContent=disp;
+  document.getElementById('rk-pen').textContent=fR(totalDSM);
+  document.getElementById('rk-freqloss').textContent=fR(totalFreq);
+}
+
+// ── Filter ────────────────────────────────────────────────────
+function rcaFilter(type,btn){
+  RCA_FILTER=type;
+  document.querySelectorAll('.rca-fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  fillRCATab();
+}
+
+// ── Exports ───────────────────────────────────────────────────
+function exportRCACSV(){
+  const data=getRCAData();
+  const headers=['RID','Date','Time','Schedule','Actual','Dev','Type','DSM_Rs','FreqBlocked_Rs',
+    'FreqHit','Category','SubReason','Controllable','Factor','Team',
+    'ImmediateCause','RootCause','CorrectiveAction','DocumentRef',
+    'Owner','DueDate','Status','Disputed','SavedAt'];
+  const rows=data.map(r=>{
+    const d=RCA_STORE[r.rid]||{};
+    return [r.rid,r.date,r.time,r.sch,r.act,r.dev.toFixed(3),r.type,r.dsm.toFixed(2),
+      r.freqBlocked.toFixed(2),r.freqHit?'YES':'NO',
+      d.cat||'',d.sub||'',d.ctrl||'',d.factor||'',d.team||'',
+      `"${(d.imm||'').replace(/"/g,"'")}"`,`"${(d.root||'').replace(/"/g,"'")}"`,
+      `"${(d.act||'').replace(/"/g,"'")}"`,`"${(d.ref||'').replace(/"/g,"'")}"`,
+      d.own||'',d.tdt||'',d.status||'Not Filed',d.disputed?'YES':'NO',d.savedAt||''
+    ].join(',');
+  });
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`WS_RCA_${CN.replace(/\s/g,'_')}_${WN||'Export'}.csv`;a.click();
+  rcaToast('📊 RCA CSV Exported');
+}
+
+function exportActionTracker(){
+  const data=getRCAData();
+  const headers=['Owner','RID','Date','Time','Type','DSM_Rs','Status','DueDate','Priority','CorrectiveAction','Team'];
+  const rows=data.map(r=>{
+    const d=RCA_STORE[r.rid];if(!d||d.status==='Closed')return null;
+    const days=d.tdt?Math.max(0,Math.ceil((new Date(d.tdt)-new Date())/86400000)):999;
+    const pri=days<=3?'🔴 HIGH':days<=7?'🟡 MEDIUM':'🟢 LOW';
+    return [d.own||'Unassigned',r.rid,r.date,r.time,r.type,r.dsm.toFixed(2),
+      d.status,d.tdt||'',pri,`"${(d.act||'').replace(/"/g,"'")}"`,d.team||''].join(',');
+  }).filter(Boolean);
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`ActionTracker_${CN.replace(/\s/g,'_')}_${WN||'Export'}.csv`;a.click();
+  rcaToast('📋 Action Tracker Exported');
+}
+
+function exportSingleRCA(rid){
+  const d=RCA_STORE[rid];const r=getRCAData().find(x=>x.rid===rid);
+  if(!d){rcaToast('⚠️ Save RCA first',true);return;}
+  const txt=[
+    `WS SELLER DSM — RCA REPORT`,
+    `Company: ${CN} | Period: ${WN}`,
+    `═══════════════════════════════════════`,
+    `ID: ${rid} | Date: ${r.date} | Time: ${r.time}`,
+    `Type: ${r.type} | Dev: ${r.dev.toFixed(3)} MU`,
+    `DSM Charge: ₹${r.dsm.toFixed(2)}${r.freqHit?' | Freq Blocked: ₹'+r.freqBlocked.toFixed(2):''}`,
+    ``,`📂 ROOT CAUSE`,
+    `Category: ${d.cat} | Sub: ${d.sub}`,
+    `Factor: ${d.factor} | Controllable: ${d.ctrl}`,
+    `Team: ${d.team}`,
+    `Immediate Cause: ${d.imm}`,
+    `Root Cause: ${d.root}`,
+    ``,`🛠️ ACTION PLAN`,
+    `Owner: ${d.own} | Due: ${d.tdt}`,
+    `Status: ${d.status}${d.disputed?' | DISPUTED':''}`,
+    `Actions: ${d.act}`,
+    `Documents: ${d.ref}`,
+    ``,`Saved: ${d.savedAt}`
+  ].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);
+  a.download=`RCA_${rid}_${r.date.replace(/-/g,'')}.txt`;a.click();
+}
+
+function rcaToast(msg,warn=false){
+  const t=document.getElementById('rcaToast');
+  t.textContent=msg;t.style.background=warn?'#f59e0b':'#10b981';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+// ═══════════════════════════════════════════════════════════════
+
+
+// ═══════════════════════════════════════════════════════════════
+// PARETO / RCA ANALYTICS MODULE
+// ═══════════════════════════════════════════════════════════════
+let PARETO_FACTOR = 'ALL';
+let PARETO_TYPE   = 'ALL';
+let PARETO_CAT    = null; // clicked bar filter
+
+const CAT_LABELS = {
+  A:'A: Machine/Plant',B:'B: SLDC Instruction',C:'C: Scheduling Error',
+  D:'D: Transmission',E:'E: Equipment Failure',F:'F: Operations Error',
+  G:'G: Metering',H:'H: Force Majeure','':'Not Categorised'
+};
+const CAT_COLORS = {
+  A:'#4f46e5',B:'#ef4444',C:'#f59e0b',D:'#3b82f6',
+  E:'#8b5cf6',F:'#ec4899',G:'#14b8a6',H:'#64748b','':'#94a3b8'
+};
+const FACTOR_COLORS = {Internal:'#4f46e5',External:'#ef4444','Semi-Controllable':'#f59e0b','Semi':'#f59e0b','':'#94a3b8'};
+
+function getParetoData(){
+  const data = getRCAData();
+  const minAmt = parseFloat(document.getElementById('rca-min-amt')?.value)||0;
+  return data.filter(r=>{
+    const eff = r.freqHit ? r.freqBlocked : Math.abs(r.dsm);
+    if(eff < minAmt) return false;                         // threshold filter
+    if(PARETO_TYPE!=='ALL' && r.type!==PARETO_TYPE) return false;
+    const d = RCA_STORE[r.rid];
+    if(PARETO_FACTOR!=='ALL'){
+      const f = d?.factor||'';
+      if(PARETO_FACTOR==='Semi' && !f.toLowerCase().includes('semi')) return false;
+      if(PARETO_FACTOR==='Internal' && f!=='Internal') return false;
+      if(PARETO_FACTOR==='External' && f!=='External') return false;
+    }
+    if(PARETO_CAT){const cat=d?.cat||'';if(cat!==PARETO_CAT)return false;}
+    return true;
+  });
+}
+
+function getEffectiveDSM(r){
+  // Use grossOI for freq-hit slots (that's the real revenue loss)
+  return r.freqHit ? r.freqBlocked : r.dsm;
+}
+
+function renderPareto(){
+  const data = getRCAData();
+  const hasSaved = Object.keys(RCA_STORE).length > 0;
+  const panel = document.getElementById('rca-analytics-panel');
+  if(!data.length){return;}
+
+  const filtered = getParetoData();
+  const topN = parseInt(document.getElementById('rca-topn')?.value)||8;
+
+  // ── Group by Category ──────────────────────────────────
+  const byCat = {};
+  filtered.forEach(r=>{
+    const d=RCA_STORE[r.rid]; const cat=d?.cat||'';
+    if(!byCat[cat]) byCat[cat]={dsm:0,slots:0,factor:d?.factor||''};
+    byCat[cat].dsm += getEffectiveDSM(r); byCat[cat].slots++;
+  });
+
+  // ── Group by Factor ─────────────────────────────────────
+  const byFactor = {};
+  filtered.forEach(r=>{
+    const d=RCA_STORE[r.rid]; const fac=d?.factor||'Not Set';
+    if(!byFactor[fac]) byFactor[fac]={dsm:0,slots:0};
+    byFactor[fac].dsm += getEffectiveDSM(r); byFactor[fac].slots++;
+  });
+
+  // ── Group by Team ───────────────────────────────────────
+  const byTeam = {};
+  filtered.forEach(r=>{
+    const d=RCA_STORE[r.rid]; const team=d?.team||'Unassigned';
+    if(!byTeam[team]) byTeam[team]={dsm:0,slots:0};
+    byTeam[team].dsm += getEffectiveDSM(r); byTeam[team].slots++;
+  });
+
+  // ── Group by Date ───────────────────────────────────────
+  const byDate = {};
+  filtered.forEach(r=>{
+    if(!byDate[r.date]) byDate[r.date]={dsm:0,slots:0};
+    byDate[r.date].dsm += getEffectiveDSM(r); byDate[r.date].slots++;
+  });
+
+  const totalDSM = filtered.reduce((s,r)=>s+getEffectiveDSM(r),0);
+
+  // ── Render bar chart helper ─────────────────────────────
+  function makeBars(containerId, grouped, colorFn, labelFn, clickFn){
+    const sorted = Object.entries(grouped)
+      .sort((a,b)=>b[1].dsm-a[1].dsm).slice(0,topN);
+    const max = sorted[0]?.[1]?.dsm||1;
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    if(!sorted.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.78rem;padding:8px;">Save RCA entries to see data.</div>';return;}
+
+    let cum=0; let html80='';
+    el.innerHTML = sorted.map(([key,val],i)=>{
+      const pct = totalDSM>0?(val.dsm/totalDSM*100):0;
+      const barW = max>0?(val.dsm/max*100):0;
+      cum += pct;
+      const is80 = cum<=80.01&&pct>0;
+      const color = colorFn(key);
+      const label = labelFn(key);
+      return `<div class="pareto-bar-row" onclick="${clickFn}('${key}')" title="${label}: ₹${val.dsm.toFixed(0)} | ${val.slots} slots | ${pct.toFixed(1)}%">
+        <div class="pareto-bar-label" title="${label}">${label}${is80?'<span class="top80-badge">80%</span>':''}</div>
+        <div class="pareto-bar-track">
+          <div class="pareto-bar-fill" style="width:${barW.toFixed(1)}%;background:${color};">
+            <span>${pct.toFixed(1)}%</span>
+          </div>
+        </div>
+        <div class="pareto-bar-val" style="color:${color};">₹${fA(val.dsm)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  makeBars('pareto-cat-bars', byCat,
+    k=>CAT_COLORS[k]||'#94a3b8',
+    k=>CAT_LABELS[k]||'Not Categorised',
+    'filterByCat');
+
+  makeBars('pareto-factor-bars', byFactor,
+    k=>FACTOR_COLORS[k]||'#94a3b8',
+    k=>k,
+    'filterByFactor');
+
+  makeBars('pareto-team-bars', byTeam,
+    ()=>'#3b82f6', k=>k, 'filterByTeam');
+
+  makeBars('pareto-date-bars', byDate,
+    ()=>'#10b981', k=>k, 'filterByDate');
+
+  // ── Insight strip ───────────────────────────────────────
+  const ins = document.getElementById('pareto-insight');
+  if(ins){
+    const saved = filtered.filter(r=>RCA_STORE[r.rid]);
+    const unsaved = filtered.length - saved.length;
+    const catsSorted = Object.entries(byCat).sort((a,b)=>b[1].dsm-a[1].dsm);
+    const top1 = catsSorted[0];
+    const pctTop = totalDSM>0&&top1?(top1[1].dsm/totalDSM*100).toFixed(1):0;
+    const freqTotal = filtered.reduce((s,r)=>s+r.freqBlocked,0);
+    ins.innerHTML = `<strong>📊 Analytics Summary</strong> &nbsp;|&nbsp;
+      <strong>${filtered.length}</strong> slots matched &nbsp;|&nbsp;
+      Total DSM: <strong>₹${fA(totalDSM)}</strong>
+      ${freqTotal>0?` &nbsp;|&nbsp; Freq-Blocked: <strong style="color:#dc2626">₹${fA(freqTotal)}</strong>`:''}
+      ${top1?` &nbsp;|&nbsp; Top Reason: <strong style="color:${CAT_COLORS[top1[0]]||'var(--primary)'}">${CAT_LABELS[top1[0]]}</strong> (${pctTop}%)`:' &nbsp;|&nbsp; No RCA saved yet — file RCAs to see breakdown'}
+      ${unsaved>0?` &nbsp;|&nbsp; <span style="color:#f59e0b;font-weight:700">${unsaved} slots without RCA</span>`:''}
+      ${PARETO_CAT?` &nbsp;|&nbsp; <span style="color:#ef4444">🔍 Filtered by: ${CAT_LABELS[PARETO_CAT]}</span> <a href="#" onclick="clearCatFilter();return false;" style="color:var(--primary);font-size:.72rem;margin-left:4px;">✕ Clear</a>`:''}`;
+  }
+
+  // ── Key Reasons (80/20) ─────────────────────────────────
+  const krPanel = document.getElementById('pareto-key-reasons');
+  const krChips = document.getElementById('kr-chips');
+  if(krPanel && krChips && Object.keys(byCat).length){
+    krPanel.style.display='block';
+    let cum2=0;
+    const key80 = Object.entries(byCat).sort((a,b)=>b[1].dsm-a[1].dsm).filter(([k,v])=>{
+      if(cum2>=80) return false;
+      cum2 += totalDSM>0?(v.dsm/totalDSM*100):0; return true;
+    });
+    const savedCats = key80.filter(([k])=>k!=='');
+    krChips.innerHTML = savedCats.length ?
+      savedCats.map(([k,v])=>{
+        const d=RCA_STORE[Object.keys(RCA_STORE).find(rid=>(RCA_STORE[rid]?.cat||'')==k)]||{};
+        const fc=d.factor==='Internal'?'c-int':d.factor==='External'?'c-ext':'c-semi';
+        const pct=totalDSM>0?(v.dsm/totalDSM*100).toFixed(1):0;
+        return `<span class="kr-chip ${fc}" onclick="filterByCat('${k}')" title="Click to filter">${CAT_LABELS[k]} — ₹${fA(v.dsm)} (${pct}%)</span>`;
+      }).join('') :
+      '<span style="color:var(--text-muted);font-size:.78rem;">File RCA entries to identify key reasons.</span>';
+  } else if(krPanel) krPanel.style.display='none';
+}
+
+// ── Bar click filters ─────────────────────────────────────────
+function filterByCat(cat){
+  PARETO_CAT = (PARETO_CAT===cat)?null:cat;
+  RCA_FILTER = 'ALL';
+  // also filter the table below to matching rows
+  if(PARETO_CAT){
+    // highlight matching rows
+    document.querySelectorAll('#rcaBody tr.rca-row-tr').forEach(tr=>{
+      const rid = tr.id.replace('rrow-','');
+      const d = RCA_STORE[rid];
+      tr.style.opacity = (!d||(d.cat||''===PARETO_CAT)||(d.cat===PARETO_CAT)) ? '1':'0.3';
+    });
+  } else {
+    document.querySelectorAll('#rcaBody tr.rca-row-tr').forEach(tr=>tr.style.opacity='1');
+  }
+  renderPareto();
+}
+function clearCatFilter(){PARETO_CAT=null;document.querySelectorAll('#rcaBody tr.rca-row-tr').forEach(tr=>tr.style.opacity='1');renderPareto();}
+function filterByFactor(f){PARETO_FACTOR=f;setFactorFilter(f,null);renderPareto();}
+function filterByTeam(t){/* future: filter table by team */renderPareto();}
+function filterByDate(d){/* future: filter table by date */renderPareto();}
+
+function setFactorFilter(f,btn){
+  PARETO_FACTOR=f;
+  ['all','int','ext','semi'].forEach(k=>{
+    const b=document.getElementById('ffs-'+k); if(b) b.className='ffs-btn';
+  });
+  const map={'ALL':'all','Internal':'int','External':'ext','Semi':'semi'};
+  const active=map[f]||'all';
+  const b=document.getElementById('ffs-'+active);
+  if(b) b.className='ffs-btn active-'+active;
+  renderPareto();
+}
+
+function setTypeFilter(t,btn){
+  PARETO_TYPE=t;
+  ['all','oi','ui'].forEach(k=>{
+    const b=document.getElementById('fft-'+k); if(b) b.className='ffs-btn';
+  });
+  const map={'ALL':'all','OI':'oi','UI':'ui'};
+  const b=document.getElementById('fft-'+(map[t]||'all'));
+  if(b) b.className='ffs-btn active-all';
+  applyRCAThreshold();
+}
+
+function resetParetoFilters(){
+  PARETO_FACTOR='ALL'; PARETO_TYPE='ALL'; PARETO_CAT=null;
+  const mn=document.getElementById('rca-min-amt'); if(mn)mn.value=0;
+  const tn=document.getElementById('rca-topn'); if(tn)tn.value=8;
+  setFactorFilter('ALL',null); setTypeFilter('ALL',null);
+  document.querySelectorAll('#rcaBody tr.rca-row-tr').forEach(tr=>tr.style.opacity='1');
+  renderPareto();
+}
+// ═══════════════════════════════════════════════════════════════
+
+
+// ── Threshold filter: instantly show/hide table rows ─────────
+function applyRCAThreshold(){
+  const minAmt = parseFloat(document.getElementById('rca-min-amt')?.value)||0;
+  const typeF  = PARETO_TYPE;   // 'ALL','OI','UI'
+  const rows = document.querySelectorAll('#rcaBody tr.rca-row-tr');
+  let shown=0, hidden=0;
+  rows.forEach(tr=>{
+    const rid = tr.id.replace('rrow-','');
+    const r = (getRCAData()||[]).find(x=>x.rid===rid);
+    if(!r){tr.style.display='';return;}
+    const eff = r.freqHit ? r.freqBlocked : Math.abs(r.dsm);
+    const typeOk = typeF==='ALL' || r.type===typeF;
+    const amtOk  = eff >= minAmt;
+    const show   = typeOk && amtOk;
+    tr.style.display = show ? '' : 'none';
+    // also hide the expand row
+    const expRow = tr.nextElementSibling;
+    if(expRow && expRow.classList.contains('rca-expand-tr')) expRow.style.display = show?'':'none';
+    show ? shown++ : hidden++;
+  });
+  // update count badge
+  const ins = document.getElementById('pareto-insight');
+  if(ins && minAmt>0){
+    ins.innerHTML = `<strong>🔍 Threshold Filter Active: ≥ ₹${Number(minAmt).toLocaleString('en-IN')}</strong>
+      &nbsp;|&nbsp; <strong>${shown}</strong> rows shown, <strong>${hidden}</strong> hidden
+      &nbsp;|&nbsp; <a href="#" onclick="clearRCAThreshold();return false;" style="color:var(--primary);font-weight:700;">✕ Clear Filter</a>`;
+  }
+  renderPareto();
+}
+
+function clearRCAThreshold(){
+  const mn=document.getElementById('rca-min-amt'); if(mn)mn.value=0;
+  document.querySelectorAll('#rcaBody tr.rca-row-tr').forEach(tr=>{tr.style.display='';
+    const nx=tr.nextElementSibling; if(nx&&nx.classList.contains('rca-expand-tr'))nx.style.display='';
+  });
+  renderPareto();
+}
+// ─────────────────────────────────────────────────────────────
+
+
+<script>
+
+let DSM_RECORDS = [];
+function dsmStoreKey(){ return 'DSM_GS_DB_V50'; }
+function fmtINR(v){ return '₹' + Number(v||0).toLocaleString('en-IN', {maximumFractionDigits: 2}); }
+function currentOpenRCA(){ try { return rows ? rows.filter(r => { const s = typeof RCA_STORE !== 'undefined' ? RCA_STORE[r.id] : null; return !s || s.status === 'Open'; }).length : 0; } catch(e){ return 0; } }
+function recordKey(o){ return [o.unit, o.week, o.year, o.type].join('|').toUpperCase(); }
+function saveDSMState(){ try { localStorage.setItem(dsmStoreKey(), JSON.stringify(DSM_RECORDS)); } catch(e) {} }
+function loadDSMState(){ try { DSM_RECORDS = JSON.parse(localStorage.getItem(dsmStoreKey()) || '[]'); } catch(e){ DSM_RECORDS = []; } }
+function useCurrentDSMData(){
+  document.getElementById('db-unit').value = companyName || '';
+  document.getElementById('db-week').value = weekNumber || '';
+  document.getElementById('db-year').value = (new Date()).getFullYear();
+  document.getElementById('db-type').value = (rows && rows.length && rows[0].isU) ? 'Injection' : 'Drawal';
+  document.getElementById('db-rca').value = document.getElementById('db-rca').value || '';
+  document.getElementById('db-plan').value = document.getElementById('db-plan').value || '';
+}
+function saveDSMRecord(){
+  if(!rows || !rows.length){ alert('No data loaded. Please process data first.'); return; }
+  const unit = (document.getElementById('db-unit').value || companyName || '').trim();
+  const week = (document.getElementById('db-week').value || weekNumber || '').trim();
+  const year = (document.getElementById('db-year').value || '').trim();
+  const type = document.getElementById('db-type').value || 'Drawal';
+  if(!unit || !week || !year){ alert('Please enter Plant Name, Week Number and Year.'); return; }
+  const rec = {
+    key: recordKey({unit, week, year, type}), unit, week, year, type,
+    companyName: companyName || '', config: '',
+    savedOn: new Date().toISOString(),
+    rcaSummary: document.getElementById('db-rca').value || '',
+    monitoringPlan: document.getElementById('db-plan').value || '',
+    rows: JSON.parse(JSON.stringify(rows)),
+    comments: JSON.parse(JSON.stringify(comments || {})),
+    oiWtdRate: parseFloat(document.getElementById('oi-wtd-rate')?.value || 0),
+    uiWtdRate: parseFloat(document.getElementById('ui-wtd-rate')?.value || 0),
+    matLimit: parseFloat(document.getElementById('mat-limit')?.value || 5000),
+    totalBlocks: rows.length,
+    netDSM: rows.reduce((a,r)=>a + ((r.d1||0) + (r.d2||0)), 0),
+    openRca: currentOpenRCA()
+  };
+  const i = DSM_RECORDS.findIndex(x => x.key === rec.key);
+  if(i >= 0) DSM_RECORDS[i] = rec; else DSM_RECORDS.unshift(rec);
+  saveDSMState(); renderDSMDatabase(); renderDSMViewer();
+  document.getElementById('db-status').textContent = 'Saved: ' + rec.key + ' | ' + new Date(rec.savedOn).toLocaleString();
+}
+function retrieveDSMRecord(){
+  const unit = (document.getElementById('db-unit').value || '').trim().toUpperCase();
+  const week = (document.getElementById('db-week').value || '').trim().toUpperCase();
+  const year = (document.getElementById('db-year').value || '').trim().toUpperCase();
+  const type = (document.getElementById('db-type').value || '').trim().toUpperCase();
+  const rec = DSM_RECORDS.find(x => x.key === [unit, week, year, type].join('|'));
+  if(!rec){ alert('No matching record found.'); return; }
+  rows = JSON.parse(JSON.stringify(rec.rows || []));
+  comments = JSON.parse(JSON.stringify(rec.comments || {}));
+  companyName = rec.companyName || rec.unit || '';
+  weekNumber = rec.week || '';
+  if(document.getElementById('oi-wtd-rate')) document.getElementById('oi-wtd-rate').value = rec.oiWtdRate || 0;
+  if(document.getElementById('ui-wtd-rate')) document.getElementById('ui-wtd-rate').value = rec.uiWtdRate || 0;
+  if(document.getElementById('mat-limit')) document.getElementById('mat-limit').value = rec.matLimit || 5000;
+  render();
+  if(typeof switchTab === 'function') switchTab('exec');
+}
+function exportAllDSMRecords(){ const blob = new Blob([JSON.stringify(DSM_RECORDS, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'DSM_General_Seller_50_Records.json'; a.click(); }
+function importDSMRecords(ev){ const f = ev.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = e => { try { const data = JSON.parse(e.target.result); DSM_RECORDS = Array.isArray(data) ? data : (data.records || []); saveDSMState(); renderDSMDatabase(); renderDSMViewer(); alert('Records imported.'); } catch(err){ alert('Invalid JSON file.'); } }; fr.readAsText(f); }
+function renderDSMDatabase(){
+  const body = document.getElementById('dbsave-body'); if(!body) return;
+  document.getElementById('db-total').textContent = DSM_RECORDS.length;
+  document.getElementById('db-units').textContent = new Set(DSM_RECORDS.map(r => r.unit)).size;
+  document.getElementById('db-weeks').textContent = new Set(DSM_RECORDS.map(r => r.week + '-' + r.year)).size;
+  document.getElementById('db-drawal').textContent = DSM_RECORDS.filter(r => String(r.type).toLowerCase() === 'drawal').length;
+  document.getElementById('db-infirm').textContent = DSM_RECORDS.filter(r => String(r.type).toLowerCase() === 'injection').length;
+  body.innerHTML = DSM_RECORDS.length ? '' : '<tr><td colspan="11" class="no-data-msg">No saved DSM records yet. Upload data and click Save DSM Record.</td></tr>';
+  DSM_RECORDS.forEach(r => body.insertAdjacentHTML('beforeend', `<tr><td><b>${r.unit}</b></td><td>${r.week}</td><td>${r.year}</td><td>${r.type}</td><td>${r.companyName||''}</td><td>${r.config||''}</td><td>${r.totalBlocks||0}</td><td><span style="color:#16a34a;font-weight:700">${fmtINR(r.netDSM||0)}</span></td><td>${r.openRca||0}</td><td>${new Date(r.savedOn).toLocaleString()}</td><td><button class="btn btn-sm btn-primary" onclick="loadDSMRecord('${r.key}')">Load</button></td></tr>`));
+}
+function loadDSMRecord(k){ const rec = DSM_RECORDS.find(x => x.key === k); if(!rec) return; document.getElementById('db-unit').value = rec.unit; document.getElementById('db-week').value = rec.week; document.getElementById('db-year').value = rec.year; document.getElementById('db-type').value = rec.type; retrieveDSMRecord(); }
+function renderDSMViewer(){
+  const body = document.getElementById('dbview-body'); if(!body) return;
+  const fCompany = document.getElementById('db-f-company').value || 'All Companies';
+  const fYear = document.getElementById('db-f-year').value || 'All Years';
+  const fWeek = (document.getElementById('db-f-week').value || '').trim();
+  const fType = document.getElementById('db-f-type').value || 'All Types';
+  const fRca = document.getElementById('db-f-rca').value || 'All Records';
+  const filtered = DSM_RECORDS.filter(r => (fCompany === 'All Companies' || (r.companyName || r.unit) === fCompany) && (fYear === 'All Years' || String(r.year) === String(fYear)) && (!fWeek || String(r.week).includes(fWeek)) && (fType === 'All Types' || r.type === fType) && (fRca === 'All Records' || (fRca === 'Open RCA' ? (r.openRca || 0) > 0 : (r.openRca || 0) === 0)));
+  document.getElementById('dbview-count').textContent = filtered.length;
+  body.innerHTML = filtered.length ? '' : '<tr><td colspan="11" class="no-data-msg">No records match the current filters.</td></tr>';
+  filtered.forEach(r => body.insertAdjacentHTML('beforeend', `<tr><td><b>${r.unit}</b></td><td>${r.week}</td><td>${r.year}</td><td>${r.type}</td><td>${r.companyName||''}</td><td>${r.config||''}</td><td>${r.totalBlocks||0}</td><td><span style="color:#16a34a;font-weight:700">${fmtINR(r.netDSM||0)}</span></td><td>${r.openRca||0}</td><td>${new Date(r.savedOn).toLocaleString()}</td><td><button class="btn btn-sm btn-primary" onclick="loadDSMRecord('${r.key}')">Load</button></td></tr>`));
+}
+function clearDSMViewerFilters(){ document.getElementById('db-f-company').value='All Companies'; document.getElementById('db-f-year').value='All Years'; document.getElementById('db-f-week').value=''; document.getElementById('db-f-type').value='All Types'; document.getElementById('db-f-rca').value='All Records'; renderDSMViewer(); }
+function hydrateDSMDB(){ loadDSMState(); renderDSMDatabase(); renderDSMViewer(); }
+
+</script>
+</script>
+</body>
+</html>
